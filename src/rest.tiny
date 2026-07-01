@@ -1,0 +1,140 @@
+import std "http"
+import "constants.tiny" as Constants
+
+export fn authHeaders(token: string): object {
+    return {
+        "Authorization": `Bot ${token}`,
+        "Content-Type": "application/json"
+    }
+}
+
+export fn request(token: string, method: string, route: string, body: any): any {
+    const options = {
+        method: method,
+        url: `${Constants.API_BASE}${route}`,
+        headers: authHeaders(token),
+        body: body
+    }
+
+    return http.request(options)
+}
+
+export fn get(token: string, route: string): any {
+    return request(token, "GET", route, null)
+}
+
+export fn post(token: string, route: string, body: any): any {
+    return request(token, "POST", route, body)
+}
+
+export fn patch(token: string, route: string, body: any): any {
+    return request(token, "PATCH", route, body)
+}
+
+export fn put(token: string, route: string, body: any): any {
+    return request(token, "PUT", route, body)
+}
+
+export fn delete(token: string, route: string): any {
+    return request(token, "DELETE", route, null)
+}
+
+export fn channelRoute(channelId: string): string {
+    return `/channels/${channelId}`
+}
+
+export fn messageRoute(channelId: string, messageId: string): string {
+    return `/channels/${channelId}/messages/${messageId}`
+}
+
+export fn sendMessage(token: string, channelId: string, payload: object): any {
+    return post(token, `${channelRoute(channelId)}/messages`, payload)
+}
+
+export fn editMessage(token: string, channelId: string, messageId: string, payload: object): any {
+    return patch(token, messageRoute(channelId, messageId), payload)
+}
+
+export fn deleteMessage(token: string, channelId: string, messageId: string): any {
+    return delete(token, messageRoute(channelId, messageId))
+}
+
+export fn addReaction(token: string, channelId: string, messageId: string, emoji: string): any {
+    return put(token, `${messageRoute(channelId, messageId)}/reactions/${emoji}/@me`, null)
+}
+
+export fn removeOwnReaction(token: string, channelId: string, messageId: string, emoji: string): any {
+    return delete(token, `${messageRoute(channelId, messageId)}/reactions/${emoji}/@me`)
+}
+
+export fn triggerTyping(token: string, channelId: string): any {
+    return post(token, `${channelRoute(channelId)}/typing`, {})
+}
+
+export fn pinMessage(token: string, channelId: string, messageId: string): any {
+    return put(token, `${channelRoute(channelId)}/pins/${messageId}`, null)
+}
+
+export fn unpinMessage(token: string, channelId: string, messageId: string): any {
+    return delete(token, `${channelRoute(channelId)}/pins/${messageId}`)
+}
+
+export fn respondToInteraction(token: string, interactionId: string, interactionToken: string, payload: object): any {
+    return post(token, `/interactions/${interactionId}/${interactionToken}/callback`, payload)
+}
+
+export fn editInteractionResponse(token: string, applicationId: string, interactionToken: string, payload: object): any {
+    return patch(token, `/webhooks/${applicationId}/${interactionToken}/messages/@original`, payload)
+}
+
+export fn deleteInteractionResponse(token: string, applicationId: string, interactionToken: string): any {
+    return delete(token, `/webhooks/${applicationId}/${interactionToken}/messages/@original`)
+}
+
+export fn followUpInteraction(token: string, applicationId: string, interactionToken: string, payload: object): any {
+    return post(token, `/webhooks/${applicationId}/${interactionToken}`, payload)
+}
+
+export fn editFollowUpInteraction(token: string, applicationId: string, interactionToken: string, messageId: string, payload: object): any {
+    return patch(token, `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}`, payload)
+}
+
+export fn deleteFollowUpInteraction(token: string, applicationId: string, interactionToken: string, messageId: string): any {
+    return delete(token, `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}`)
+}
+
+export fn getApplicationCommands(token: string, applicationId: string): any {
+    return get(token, `/applications/${applicationId}/commands`)
+}
+
+export fn getGuildApplicationCommands(token: string, applicationId: string, guildId: string): any {
+    return get(token, `/applications/${applicationId}/guilds/${guildId}/commands`)
+}
+
+export fn bulkOverwriteApplicationCommands(token: string, applicationId: string, commands: array): any {
+    return put(token, `/applications/${applicationId}/commands`, commands)
+}
+
+export fn bulkOverwriteGuildApplicationCommands(token: string, applicationId: string, guildId: string, commands: array): any {
+    return put(token, `/applications/${applicationId}/guilds/${guildId}/commands`, commands)
+}
+
+export fn deleteApplicationCommand(token: string, applicationId: string, commandId: string): any {
+    return delete(token, `/applications/${applicationId}/commands/${commandId}`)
+}
+
+export fn deleteGuildApplicationCommand(token: string, applicationId: string, guildId: string, commandId: string): any {
+    return delete(token, `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}`)
+}
+
+export fn interactionRoute(interactionId: string, interactionToken: string): string {
+    return `/interactions/${interactionId}/${interactionToken}/callback`
+}
+
+export fn applicationCommandsRoute(applicationId: string): string {
+    return `/applications/${applicationId}/commands`
+}
+
+export fn guildApplicationCommandsRoute(applicationId: string, guildId: string): string {
+    return `/applications/${applicationId}/guilds/${guildId}/commands`
+}

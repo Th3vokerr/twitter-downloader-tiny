@@ -1,0 +1,29 @@
+import "../gateway.tiny" as Discord;
+import "../commands.tiny" as Commands;
+import "../twitter.tiny" as Twitter;
+
+export fn info() {
+    const cmd = Discord.CommandBuilder()
+    cmd.setName("download")
+    cmd.setDescription("Download a tweet as a video")
+    cmd.stringOption("link", "Link of the video", true)
+    return cmd
+}
+
+export fn run(interaction: Discord.Interaction, client: Discord.Client) {
+    const link: string = interaction.getStringOption("link")
+    if !(link.startsWith("https://x.com/") or link.startsWith("https://twitter.com/") or link.includes("/status/") or link.includes("/status")) {
+        interaction.reply("Invalid link")
+        return
+    }
+    const links = Twitter.getTwitterVideos(link)
+
+    if !links.length() {
+        interaction.reply("not found")
+        return
+    }
+
+    const highestQuality = links[links.length() - 1]
+
+    interaction.reply(highestQuality.url)
+}

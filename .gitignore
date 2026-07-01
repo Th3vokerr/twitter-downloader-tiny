@@ -1,0 +1,4 @@
+dist/
+*.tbc
+.tinycache/
+.env

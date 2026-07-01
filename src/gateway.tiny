@@ -1,0 +1,339 @@
+import std "io"
+import std "websocket"
+import std "time"
+import "constants.tiny" as Constants
+import "rest.tiny" as Rest
+import "message.tiny" as MessageModule
+import "commands.tiny" as CommandsModule
+
+export interface BotConfig {
+    token: string,
+    intents?: number,
+    logging?: bool,
+    presence?: object
+}
+
+export interface User {
+    id: string,
+    username: string,
+    discriminator?: string,
+    global_name?: string,
+    avatar?: string,
+    bot?: bool
+}
+
+export interface Guild {
+    id: string,
+    name: string,
+    unavailable?: bool
+}
+
+export interface Channel {
+    id: string,
+    type: number,
+    guild_id?: string,
+    name?: string
+}
+
+export interface MessagePayload {
+    content?: string,
+    embeds?: array,
+    components?: array,
+    allowed_mentions?: object,
+    message_reference?: object
+}
+
+export const Message = MessageModule.Message
+export const Interaction = CommandsModule.Interaction
+export const CommandBuilder = CommandsModule.CommandBuilder
+export const Intents = Constants.Intent
+
+export class Client {
+    field token = ""
+    field intents = 33280
+    field logging = false
+    field conn = null
+    field sessionId = ""
+    field sequence = null
+    field user = null
+    field latency = 0
+    field heartbeatSentTime = 0
+    field presence = null
+
+    field rawCallback = null
+    field readyCallback = null
+    field resumeCallback = null
+    field guildCreateCallback = null
+    field messageCallback = null
+    field messageUpdateCallback = null
+    field messageDeleteCallback = null
+    field interactionCallback = null
+    field errorCallback = null
+
+    field logger: function
+
+    fn init(config: BotConfig) {
+        this.token = config.token
+        this.logger = fn(...info: any) {
+            io.println(`[TinyBot]`,...info)
+        }
+        if config.intents {this.intents = config.intents }
+        if config.logging {this.logging = config.logging }
+        if config.presence {this.presence = config.presence }
+    }
+
+    fn onRaw(handler: function) {this.rawCallback = handler }
+    fn onReady(handler: function(User)) {this.readyCallback = handler }
+    fn onResume(handler: function) {this.resumeCallback = handler }
+    fn onGuildCreate(handler: function) {this.guildCreateCallback = handler }
+    fn onMessage(handler: function(MessageModule.Message, Client)) {this.messageCallback = handler }
+    fn onMessageUpdate(handler: function) {this.messageUpdateCallback = handler }
+    fn onMessageDelete(handler: function) {this.messageDeleteCallback = handler }
+    fn onInteraction(handler: function(CommandsModule.Interaction, Client)) {this.interactionCallback = handler }
+    fn onError(handler: function) {this.errorCallback = handler }
+
+    fn log(info: string) {
+        if this.logging {this.logger(info) }
+    }
+
+    fn request(method: string, route: string, body: any) {
+        return Rest.request(this.token, method, route, body)
+    }
+
+    fn get(route: string) {return Rest.get(this.token, route) }
+    fn post(route: string, body: any) {return Rest.post(this.token, route, body) }
+    fn patch(route: string, body: any) {return Rest.patch(this.token, route, body) }
+    fn put(route: string, body: any) {return Rest.put(this.token, route, body) }
+    fn delete(route: string) {return Rest.delete(this.token, route) }
+
+    fn sendMessage(channelId: string, textContent: string) {
+        return Rest.sendMessage(this.token, channelId, MessageModule.contentPayload(textContent))
+    }
+
+    fn sendEmbed(channelId: string, title: string, description: string, color: number) {
+        return Rest.sendMessage(this.token, channelId, MessageModule.embedPayload(title, description, color))
+    }
+
+    fn sendMessagePayload(channelId: string, payload: MessagePayload) {
+        return Rest.sendMessage(this.token, channelId, payload)
+    }
+
+    fn replyTo(channelId: string, messageId: string, textContent: string) {
+        return Rest.sendMessage(this.token, channelId, MessageModule.replyPayload(messageId, textContent))
+    }
+
+    fn replyPayload(channelId: string, messageId: string, payload: object) {
+        payload.message_reference = {"message_id": messageId }
+        return Rest.sendMessage(this.token, channelId, payload)
+    }
+
+    fn editMessage(channelId: string, messageId: string, textContent: string) {
+        return Rest.editMessage(this.token, channelId, messageId, MessageModule.contentPayload(textContent))
+    }
+
+    fn editMessagePayload(channelId: string, messageId: string, payload: object) {
+        return Rest.editMessage(this.token, channelId, messageId, payload)
+    }
+
+    fn deleteMessage(channelId: string, messageId: string) {
+        return Rest.deleteMessage(this.token, channelId, messageId)
+    }
+
+    fn addReaction(channelId: string, messageId: string, emoji: string) {
+        return Rest.addReaction(this.token, channelId, messageId, emoji)
+    }
+
+    fn removeOwnReaction(channelId: string, messageId: string, emoji: string) {
+        return Rest.removeOwnReaction(this.token, channelId, messageId, emoji)
+    }
+
+    fn triggerTyping(channelId: string) {
+        return Rest.triggerTyping(this.token, channelId)
+    }
+
+    fn pinMessage(channelId: string, messageId: string) {
+        return Rest.pinMessage(this.token, channelId, messageId)
+    }
+
+    fn unpinMessage(channelId: string, messageId: string) {
+        return Rest.unpinMessage(this.token, channelId, messageId)
+    }
+
+    fn getCurrentUser() {return this.get("/users/@me") }
+    fn getUser(userId: string) {return this.get(`/users/${userId}`) }
+    fn getGuild(guildId: string) {return this.get(`/guilds/${guildId}`) }
+    fn getChannel(channelId: string) {return this.get(`/channels/${channelId}`) }
+    fn getGuildChannels(guildId: string) {return this.get(`/guilds/${guildId}/channels`) }
+    fn getGuildMember(guildId: string, userId: string) {return this.get(`/guilds/${guildId}/members/${userId}`) }
+
+    fn createDm(userId: string) {
+        return this.post("/users/@me/channels", {"recipient_id": userId })
+    }
+
+    fn sendDm(userId: string, textContent: string) {
+        const dm = this.createDm(userId)
+        return this.sendMessage(dm.id, textContent)
+    }
+
+    fn setPresence(status: string, activityName: string) {
+        const payload = {
+            "op": Constants.GatewayOpcode.PresenceUpdate,
+            "d": {
+                "since": null,
+                "activities":[{"name": activityName, "type": 0 }],
+                "status": status,
+                "afk": false
+            }
+        }
+        this.presence = payload.d
+        if this.conn {this.conn.sendJson(payload) }
+    }
+
+    fn getApplicationId(): string {
+        if this.user {return this.user.id }
+        return ""
+    }
+
+    fn registerCommands(commands: array): any {
+        const appId = this.getApplicationId()
+        return Rest.bulkOverwriteApplicationCommands(this.token, appId, commands)
+    }
+
+    fn registerGuildCommands(guildId: string, commands: array): any {
+        const appId = this.getApplicationId()
+        return Rest.bulkOverwriteGuildApplicationCommands(this.token, appId, guildId, commands)
+    }
+
+    fn getCommands(): any {
+        const appId = this.getApplicationId()
+        return Rest.getApplicationCommands(this.token, appId)
+    }
+
+    fn getGuildCommands(guildId: string): any {
+        const appId = this.getApplicationId()
+        return Rest.getGuildApplicationCommands(this.token, appId, guildId)
+    }
+
+    fn deleteCommand(commandId: string): any {
+        const appId = this.getApplicationId()
+        return Rest.deleteApplicationCommand(this.token, appId, commandId)
+    }
+
+    fn deleteGuildCommand(guildId: string, commandId: string): any {
+        const appId = this.getApplicationId()
+        return Rest.deleteGuildApplicationCommand(this.token, appId, guildId, commandId)
+    }
+
+    fn start() {
+        this.log("Initializing WebSocket Gateway connection...")
+        this.conn = websocket.connect(Constants.GATEWAY_URL)
+
+        const hello = this.conn.readJson()
+        const interval = hello.d.heartbeat_interval
+
+        const liveConn = this.conn
+        const botInstance = this
+
+        spawn() fn() {
+            while liveConn.isOpen() {
+                botInstance.heartbeatSentTime = time.nowMs()
+                liveConn.sendJson({"op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
+                time.sleep(interval)
+            }
+        }
+
+        const identify = {
+            "op": Constants.GatewayOpcode.Identify,
+            "d": {
+                "token": this.token,
+                "intents": this.intents,
+                "properties": {"os": "linux", "browser": "tiny", "device": "tiny" }
+            }
+        }
+        if this.presence {identify.d.presence = this.presence }
+        this.conn.sendJson(identify)
+
+        while this.conn.isOpen() {
+            const payload = this.conn.readJson()
+            this.handlePayload(payload)
+        }
+    }
+
+    fn handlePayload(payload: object) {
+        if payload.s {this.sequence = payload.s }
+
+        if this.rawCallback {
+            const fireRaw: function = this.rawCallback
+            spawn() fn() {fireRaw(payload) }
+        }
+
+        if payload.op == Constants.GatewayOpcode.HeartbeatAck {
+            this.latency = time.nowMs() - this.heartbeatSentTime
+            return null
+        }
+
+        if payload.op == Constants.GatewayOpcode.Reconnect {
+            this.log("Gateway requested reconnect")
+            return null
+        }
+
+        if payload.op != Constants.GatewayOpcode.Dispatch {return null }
+
+        if payload.t == "READY" {
+            this.sessionId = payload.d.session_id
+            this.user = payload.d.user
+            if this.readyCallback {
+                const fireReady: function = this.readyCallback
+                const userData = payload.d.user
+                spawn() fn() {fireReady(userData) }
+            }
+        }
+
+        if payload.t == "RESUMED" {
+            if this.resumeCallback {
+                const fireResume: function = this.resumeCallback
+                spawn() fn() {fireResume(payload.d) }
+            }
+        }
+
+        if payload.t == "GUILD_CREATE" {
+            if this.guildCreateCallback {
+                const fireGuildCreate: function = this.guildCreateCallback
+                const guild = payload.d
+                spawn() fn() {fireGuildCreate(guild) }
+            }
+        }
+
+        if payload.t == "MESSAGE_CREATE" {
+            if this.messageCallback {
+                const fireMessage: function = this.messageCallback
+                const msgInstance = MessageModule.Message(payload.d, this)
+                spawn() fn() {fireMessage(msgInstance, this) }
+            }
+        }
+
+        if payload.t == "MESSAGE_UPDATE" {
+            if this.messageUpdateCallback {
+                const fireMessageUpdate: function = this.messageUpdateCallback
+                const msgInstance = MessageModule.Message(payload.d, this)
+                spawn() fn() {fireMessageUpdate(msgInstance) }
+            }
+        }
+
+        if payload.t == "MESSAGE_DELETE" {
+            if this.messageDeleteCallback {
+                const fireMessageDelete: function = this.messageDeleteCallback
+                const data = payload.d
+                spawn() fn() {fireMessageDelete(data) }
+            }
+        }
+
+        if payload.t == "INTERACTION_CREATE" {
+            if this.interactionCallback {
+                const fireInteraction: function = this.interactionCallback
+                const interactionInstance = CommandsModule.Interaction(payload.d, this)
+                spawn() fn() {fireInteraction(interactionInstance, this) }
+            }
+        }
+    }
+}

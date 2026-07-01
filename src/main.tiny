@@ -1,0 +1,74 @@
+import "twitter.tiny" as Twitter;
+import std "io";
+import "gateway.tiny" as Discord;
+import std "fs";
+import std "runtime";
+import std "object";
+import lib "confh/TinyDotEnv" as TinyDotEnv;
+import std "process";
+
+TinyDotEnv.loadEnv()
+
+const bot = Discord.Client({
+    token: process.getEnv("DISCORD_TOKEN"),
+    intents: Discord.Intents.Guilds,
+    logging: true
+})
+
+const commandsData = {}
+const commandsInvokes = {}
+
+const path = "./src/commands"
+
+const commandsTasks =[]
+
+for file in fs.readDir(path) {
+    commandsTasks.push(spawn(file) fn(file) {
+        const abs = `${path}/${file}`
+
+        const vm = runtime.newVM({
+            disableJIT: true,
+            runMainOnLoad: false
+        })
+
+        const compiled = runtime.compileFile(abs)
+
+        vm.loadBytecode(compiled)
+
+        const data: Discord.CommandBuilder = vm.call("info")
+        const name = data.toJSON().name
+
+        commandsData[name] = data.toJSON()
+
+        commandsInvokes[name] = vm
+    })
+}
+
+await commandsTasks
+
+bot.onReady(fn(user) {
+    bot.setPresence("online", "i download twitter videos make america great again")
+    io.println(`Logged in as ${user.username}#${user.discriminator}`)
+
+    const commands =[]
+
+    object.forEach(commandsData, fn(_, cmd) {
+        commands.push(cmd)
+    })
+
+    bot.registerCommands(commands)
+
+    io.println(`Registered ${commands.length()} slash commands`)
+})
+
+bot.onInteraction(fn(interaction, client) {
+    const name = interaction.getName()
+
+    if commandsInvokes[name] {
+        commandsInvokes[name].call("run", [interaction, client])
+    } else {
+        interaction.reply("command does not exist")
+    }
+})
+
+bot.start()

@@ -1,0 +1,358 @@
+import "constants.tiny" as Constants
+import "rest.tiny" as Rest
+
+export class Interaction {
+    field id = ""
+    field applicationId = ""
+    field token = ""
+    field type = 0
+    field data = null
+    field guildId = ""
+    field channelId = ""
+    field member = null
+    field user = null
+    field message = null
+    field raw = null
+    field client = null
+    field responded = false
+    field deferred = false
+
+    fn init(data: object, client: any) {
+        this.raw = data
+        this.id = data.id
+        this.applicationId = data.application_id
+        this.token = data.token
+        this.type = data.type
+        this.data = data.data
+        this.guildId = data.guild_id
+        this.channelId = data.channel_id
+        this.member = data.member
+        this.user = data.user
+        this.message = data.message
+        this.client = client
+    }
+
+    fn getName(): string {
+        if this.data { return this.data.name }
+        return ""
+    }
+
+    fn getOption(name: string): any {
+        if !this.data or !this.data.options { return null }
+        for option, _ in this.data.options {
+            if option.name == name { return option }
+        }
+        return null
+    }
+
+    fn getOptionValue(name: string): any {
+        const option = this.getOption(name)
+        if option { return option.value }
+        return null
+    }
+
+    fn getStringOption(name: string): string {
+        const val = this.getOptionValue(name)
+        if val != null { return val }
+        return ""
+    }
+
+    fn getIntOption(name: string): number {
+        const val = this.getOptionValue(name)
+        if val != null { return val }
+        return 0
+    }
+
+    fn getBoolOption(name: string): bool {
+        const val = this.getOptionValue(name)
+        if val != null { return val }
+        return false
+    }
+
+    fn getUserOption(name: string): object | null {
+        const option = this.getOption(name)
+        if option { return option.user }
+        return null
+    }
+
+    fn getChannelOption(name: string): string {
+        const val = this.getOptionValue(name)
+        if val != null { return val }
+        return ""
+    }
+
+    fn isCommand(): bool {
+        return this.type == Constants.InteractionType.ApplicationCommand
+    }
+
+    fn isAutocomplete(): bool {
+        return this.type == Constants.InteractionType.ApplicationCommandAutocomplete
+    }
+
+    fn isComponent(): bool {
+        return this.type == Constants.InteractionType.MessageComponent
+    }
+
+    fn isModalSubmit(): bool {
+        return this.type == Constants.InteractionType.ModalSubmit
+    }
+
+    fn respond(payload: object): any {
+        this.responded = true
+        return Rest.respondToInteraction(this.client.token, this.id, this.token, payload)
+    }
+
+    fn reply(content: string): any {
+        return this.respond({
+            "type": Constants.InteractionResponseType.ChannelMessage,
+            "data": { "content": content }
+        })
+    }
+
+    fn replyEmbed(title: string, description: string, color?: number): any {
+        return this.respond({
+            "type": Constants.InteractionResponseType.ChannelMessage,
+            "data": {
+                "embeds": [{
+                    "title": title,
+                    "description": description,
+                    "color": color
+                }]
+            }
+        })
+    }
+
+    fn replyEphemeral(content: string): any {
+        return this.respond({
+            "type": Constants.InteractionResponseType.ChannelMessage,
+            "data": {
+                "content": content,
+                "flags": 64
+            }
+        })
+    }
+
+    fn defer(): any {
+        this.deferred = true
+        return this.respond({
+            "type": Constants.InteractionResponseType.DeferredChannelMessage,
+            "data": {}
+        })
+    }
+
+    fn deferEphemeral(): any {
+        this.deferred = true
+        return this.respond({
+            "type": Constants.InteractionResponseType.DeferredChannelMessage,
+            "data": { "flags": 64 }
+        })
+    }
+
+    fn editReply(content: string): any {
+        return Rest.editInteractionResponse(this.client.token, this.applicationId, this.token, {
+            "content": content
+        })
+    }
+
+    fn editReplyPayload(payload: object): any {
+        return Rest.editInteractionResponse(this.client.token, this.applicationId, this.token, payload)
+    }
+
+    fn deleteReply(): any {
+        return Rest.deleteInteractionResponse(this.client.token, this.applicationId, this.token)
+    }
+
+    fn followUp(content: string): any {
+        return Rest.followUpInteraction(this.client.token, this.applicationId, this.token, {
+            "content": content
+        })
+    }
+
+    fn followUpPayload(payload: object): any {
+        return Rest.followUpInteraction(this.client.token, this.applicationId, this.token, payload)
+    }
+
+    fn editFollowUp(messageId: string, content: string): any {
+        return Rest.editFollowUpInteraction(this.client.token, this.applicationId, this.token, messageId, {
+            "content": content
+        })
+    }
+
+    fn deleteFollowUp(messageId: string): any {
+        return Rest.deleteFollowUpInteraction(this.client.token, this.applicationId, this.token, messageId)
+    }
+
+    fn autocompleteResult(choices: array): any {
+        return this.respond({
+            "type": Constants.InteractionResponseType.ApplicationCommandAutocompleteResult,
+            "data": { "choices": choices }
+        })
+    }
+
+    fn modal(title: string, components: array): any {
+        return this.respond({
+            "type": Constants.InteractionResponseType.Modal,
+            "data": {
+                "title": title,
+                "custom_id": this.id,
+                "components": components
+            }
+        })
+    }
+}
+
+export class CommandBuilder {
+    field name = ""
+    field description = ""
+    field options = []
+    field defaultMemberPermissions = null
+    field dmPermission = true
+    field type = 1
+
+    fn setName(n: string): CommandBuilder {
+        this.name = n
+        return this
+    }
+
+    fn setDescription(d: string): CommandBuilder {
+        this.description = d
+        return this
+    }
+
+    fn setType(t: number): CommandBuilder {
+        this.type = t
+        return this
+    }
+
+    fn addOption(option: object): CommandBuilder {
+        this.options.push(option)
+        return this
+    }
+
+    fn stringOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.String,
+            "required": required
+        })
+        return this
+    }
+
+    fn intOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.Integer,
+            "required": required
+        })
+        return this
+    }
+
+    fn boolOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.Bool,
+            "required": required
+        })
+        return this
+    }
+
+    fn userOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.User,
+            "required": required
+        })
+        return this
+    }
+
+    fn channelOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.Channel,
+            "required": required
+        })
+        return this
+    }
+
+    fn roleOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.Role,
+            "required": required
+        })
+        return this
+    }
+
+    fn numberOption(name: string, description: string, required: bool): CommandBuilder {
+        this.options.push({
+            "name": name,
+            "description": description,
+            "type": Constants.ApplicationCommandOptionType.Number,
+            "required": required
+        })
+        return this
+    }
+
+    fn toJSON(): object {
+        const cmd = {
+            name: this.name,
+            description: this.description,
+            type: this.type
+        }
+        if this.options.length() > 0 { cmd.options = this.options }
+        if this.defaultMemberPermissions != null { cmd.default_member_permissions = this.defaultMemberPermissions }
+        if this.dmPermission == false { cmd.dm_permission = false }
+        return cmd
+    }
+}
+
+export fn optionChoice(name: string, value: any): object {
+    return { "name": name, "value": value }
+}
+
+export fn response(type: number, data: any): object {
+    const resp = { "type": type }
+    if data != null { resp.data = data }
+    return resp
+}
+
+export fn channelMessage(content: string): object {
+    return response(Constants.InteractionResponseType.ChannelMessage, { "content": content })
+}
+
+export fn channelMessageEphemeral(content: string): object {
+    return response(Constants.InteractionResponseType.ChannelMessage, {
+        "content": content,
+        "flags": 64
+    })
+}
+
+export fn deferredChannelMessage(): object {
+    return response(Constants.InteractionResponseType.DeferredChannelMessage, {})
+}
+
+export fn deferredEphemeral(): object {
+    return response(Constants.InteractionResponseType.DeferredChannelMessage, { "flags": 64 })
+}
+
+export fn deferredUpdateMessage(): object {
+    return response(Constants.InteractionResponseType.DeferredUpdateMessage, {})
+}
+
+export fn updateMessage(content: string): object {
+    return response(Constants.InteractionResponseType.UpdateMessage, { "content": content })
+}
+
+export fn autocompleteChoices(choices: array): object {
+    return response(Constants.InteractionResponseType.ApplicationCommandAutocompleteResult, { "choices": choices })
+}
+
+export fn choice(name: string, value: string): object {
+    return { "name": name, "value": value }
+}

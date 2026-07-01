@@ -1,0 +1,110 @@
+import std "time";
+
+export class Message {
+    field id = ""
+    field channelId = ""
+    field guildId = ""
+    field content = ""
+    field author: object
+    field member = null
+    field mentions = []
+    field attachments = []
+    field embeds = []
+    field timestamp: number
+    field editedTimestamp: number
+    field raw = null
+    field client: any
+
+    fn init(data: object, client: any) {
+        this.raw = data
+        this.id = data.id
+        this.channelId = data.channel_id
+        this.guildId = data.guild_id
+        this.content = data.content
+        this.author = data.author
+        this.member = data.member
+        this.mentions = data.mentions
+        this.attachments = data.attachments
+        this.embeds = data.embeds
+        this.timestamp = time.parseUnix(data.timestamp, time.TimeUnit.Milliseconds)
+        if data.edited_timestamp {
+            this.editedTimestamp =  time.parseUnix(data.edited_timestamp, time.TimeUnit.Milliseconds)
+        }
+        this.client = client
+    }
+
+    fn reply(textContent: string) {
+        return this.client.replyTo(this.channelId, this.id, textContent)
+    }
+
+    fn replyPayload(payload: object) {
+        return this.client.replyPayload(this.channelId, this.id, payload)
+    }
+
+    fn edit(textContent: string) {
+        return this.client.editMessage(this.channelId, this.id, textContent)
+    }
+
+    fn editPayload(payload: object) {
+        return this.client.editMessagePayload(this.channelId, this.id, payload)
+    }
+
+    fn deleteMessage() {
+        return this.client.deleteMessage(this.channelId, this.id)
+    }
+
+    fn react(emoji: string) {
+        return this.client.addReaction(this.channelId, this.id, emoji)
+    }
+
+    fn unreact(emoji: string) {
+        return this.client.removeOwnReaction(this.channelId, this.id, emoji)
+    }
+
+    fn pin() {
+        return this.client.pinMessage(this.channelId, this.id)
+    }
+
+    fn unpin() {
+        return this.client.unpinMessage(this.channelId, this.id)
+    }
+
+    fn typing() {
+        return this.client.triggerTyping(this.channelId)
+    }
+
+    fn isFromBot(): bool {
+        return this.author != null and this.author.bot == true
+    }
+}
+
+export fn contentPayload(content: string): object {
+    return { "content": content }
+}
+
+export fn replyPayload(messageId: string, content: string): object {
+    return {
+        "content": content,
+        "message_reference": { "message_id": messageId }
+    }
+}
+
+export fn embedPayload(title: string, description: string, color: number): object {
+    return {
+        "embeds": [{
+            "title": title,
+            "description": description,
+            "color": color
+        }]
+    }
+}
+
+export fn withAllowedMentions(payload: object, allowedMentions: object): object {
+    payload.allowed_mentions = allowedMentions
+    return payload
+}
+
+export fn suppressMentions(payload: object): object {
+    payload.allowed_mentions = { "parse": [] }
+    return payload
+}
