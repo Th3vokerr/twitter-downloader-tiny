@@ -172,7 +172,7 @@ export class Client {
     field presences = {}
     field voiceStates = {}
 
-    field private running = true
+    field running = true
 
     field logger: function
 
