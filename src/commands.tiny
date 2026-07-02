@@ -1,6 +1,63 @@
 import "constants.tiny" as Constants
 import "rest.tiny" as Rest
 
+export interface InteractionPayload {
+    id: string,
+    application_id: string,
+    token: string,
+    type: number,
+    data?: object,
+    guild_id?: string,
+    channel_id?: string,
+    member?: object,
+    user?: object,
+    message?: object
+}
+
+export interface EmbedField {
+    name: string,
+    value: string,
+    inline?: bool
+}
+
+export interface EmbedPayload {
+    title?: string,
+    description?: string,
+    color?: number,
+    url?: string,
+    timestamp?: string,
+    footer?: object,
+    author?: object,
+    thumbnail?: object,
+    image?: object,
+    fields?: array
+}
+
+export interface Component {
+    type: number
+}
+
+export interface ActionRowComponent {
+    type: number,
+    components: array
+}
+
+export interface ButtonComponent {
+    type: number,
+    style: number,
+    label?: string,
+    custom_id?: string,
+    url?: string,
+    sku_id?: string,
+    disabled?: bool,
+    emoji?: object
+}
+
+export interface TextDisplayComponent {
+    type: number,
+    content: string
+}
+
 export class Interaction {
     field id = ""
     field applicationId = ""
@@ -17,7 +74,7 @@ export class Interaction {
     field responded = false
     field deferred = false
 
-    fn init(data: object, client: any) {
+    fn init(data: InteractionPayload, client: any) {
         this.raw = data
         this.id = data.id
         this.applicationId = data.application_id
@@ -37,7 +94,7 @@ export class Interaction {
         return ""
     }
 
-    fn getOption(name: string): any {
+    fn getOption(name: string): object | null {
         if !this.data or !this.data.options { return null }
         for option, _ in this.data.options {
             if option.name == name { return option }
@@ -97,6 +154,21 @@ export class Interaction {
         return this.type == Constants.InteractionType.ModalSubmit
     }
 
+    fn getCustomId(): string {
+        if this.data and this.data.custom_id { return this.data.custom_id }
+        return ""
+    }
+
+    fn getComponentType(): number {
+        if this.data and this.data.component_type { return this.data.component_type }
+        return 0
+    }
+
+    fn getValues(): array {
+        if this.data and this.data.values { return this.data.values }
+        return []
+    }
+
     fn respond(payload: object): any {
         this.responded = true
         return Rest.respondToInteraction(this.client.token, this.id, this.token, payload)
@@ -109,16 +181,39 @@ export class Interaction {
         })
     }
 
-    fn replyEmbed(title: string, description: string, color?: number): any {
+    fn replyPayload(payload: object): any {
         return this.respond({
             "type": Constants.InteractionResponseType.ChannelMessage,
-            "data": {
-                "embeds": [{
-                    "title": title,
-                    "description": description,
-                    "color": color
-                }]
-            }
+            "data": payload
+        })
+    }
+
+    fn replyComponents(components: array): any {
+        return this.replyPayload(componentsV2Payload(components))
+    }
+
+    fn replyActionRow(components: array): any {
+        return this.replyComponents([actionRow(components)])
+    }
+
+    fn replyComponentsEphemeral(components: array): any {
+        const payload = componentsV2Payload(components)
+        payload.flags = payload.flags | Constants.MessageFlag.Ephemeral
+        return this.replyPayload(payload)
+    }
+
+    fn replyActionRowEphemeral(components: array): any {
+        return this.replyComponentsEphemeral([actionRow(components)])
+    }
+
+    fn replyEmbeds(embeds: array): any {
+        return this.replyPayload({ "embeds": normalizeEmbeds(embeds) })
+    }
+
+    fn replyEmbedsEphemeral(embeds: array): any {
+        return this.replyPayload({
+            "embeds": normalizeEmbeds(embeds),
+            "flags": Constants.MessageFlag.Ephemeral
         })
     }
 
@@ -158,6 +253,22 @@ export class Interaction {
         return Rest.editInteractionResponse(this.client.token, this.applicationId, this.token, payload)
     }
 
+    fn editReplyEmbed(card: any): any {
+        return this.editReplyPayload({ "embeds": normalizeEmbeds([card]) })
+    }
+
+    fn editReplyEmbeds(embeds: array): any {
+        return this.editReplyPayload({ "embeds": normalizeEmbeds(embeds) })
+    }
+
+    fn editReplyComponents(components: array): any {
+        return this.editReplyPayload(componentsV2Payload(components))
+    }
+
+    fn editReplyActionRow(components: array): any {
+        return this.editReplyComponents([actionRow(components)])
+    }
+
     fn deleteReply(): any {
         return Rest.deleteInteractionResponse(this.client.token, this.applicationId, this.token)
     }
@@ -172,14 +283,75 @@ export class Interaction {
         return Rest.followUpInteraction(this.client.token, this.applicationId, this.token, payload)
     }
 
+    fn followUpEmbed(card: any): any {
+        return this.followUpPayload({ "embeds": normalizeEmbeds([card]) })
+    }
+
+    fn followUpEmbeds(embeds: array): any {
+        return this.followUpPayload({ "embeds": normalizeEmbeds(embeds) })
+    }
+
+    fn followUpComponents(components: array): any {
+        return this.followUpPayload(componentsV2Payload(components))
+    }
+
+    fn followUpActionRow(components: array): any {
+        return this.followUpComponents([actionRow(components)])
+    }
+
+    fn followUpComponentsEphemeral(components: array): any {
+        const payload = componentsV2Payload(components)
+        payload.flags = payload.flags | Constants.MessageFlag.Ephemeral
+        return this.followUpPayload(payload)
+    }
+
+    fn followUpActionRowEphemeral(components: array): any {
+        return this.followUpComponentsEphemeral([actionRow(components)])
+    }
+
     fn editFollowUp(messageId: string, content: string): any {
         return Rest.editFollowUpInteraction(this.client.token, this.applicationId, this.token, messageId, {
             "content": content
         })
     }
 
+    fn editFollowUpPayload(messageId: string, payload: object): any {
+        return Rest.editFollowUpInteraction(this.client.token, this.applicationId, this.token, messageId, payload)
+    }
+
+    fn editFollowUpComponents(messageId: string, components: array): any {
+        return this.editFollowUpPayload(messageId, componentsV2Payload(components))
+    }
+
     fn deleteFollowUp(messageId: string): any {
         return Rest.deleteFollowUpInteraction(this.client.token, this.applicationId, this.token, messageId)
+    }
+
+    fn updatePayload(payload: object): any {
+        return this.respond({
+            "type": Constants.InteractionResponseType.UpdateMessage,
+            "data": payload
+        })
+    }
+
+    fn update(content: string): any {
+        return this.updatePayload({ "content": content })
+    }
+
+    fn updateEmbed(card: any): any {
+        return this.updatePayload({ "embeds": normalizeEmbeds([card]) })
+    }
+
+    fn updateEmbeds(embeds: array): any {
+        return this.updatePayload({ "embeds": normalizeEmbeds(embeds) })
+    }
+
+    fn updateComponents(components: array): any {
+        return this.updatePayload(componentsV2Payload(components))
+    }
+
+    fn updateActionRow(components: array): any {
+        return this.updateComponents([actionRow(components)])
     }
 
     fn autocompleteResult(choices: array): any {
@@ -198,6 +370,82 @@ export class Interaction {
                 "components": components
             }
         })
+    }
+}
+
+export class EmbedBuilder {
+    field data = {}
+
+    fn init() {
+        this.data = {}
+    }
+
+    fn setTitle(title: string): EmbedBuilder {
+        this.data.title = title
+        return this
+    }
+
+    fn setDescription(description: string): EmbedBuilder {
+        this.data.description = description
+        return this
+    }
+
+    fn setColor(color: number): EmbedBuilder {
+        this.data.color = color
+        return this
+    }
+
+    fn setUrl(url: string): EmbedBuilder {
+        this.data.url = url
+        return this
+    }
+
+    fn setTimestamp(timestamp: string): EmbedBuilder {
+        this.data.timestamp = timestamp
+        return this
+    }
+
+    fn setFooter(text: string, iconUrl?: string): EmbedBuilder {
+        this.data.footer = { "text": text }
+        if iconUrl != null and iconUrl != "" {this.data.footer.icon_url = iconUrl }
+        return this
+    }
+
+    fn setAuthor(name: string, iconUrl?: string, url?: string): EmbedBuilder {
+        this.data.author = { "name": name }
+        if iconUrl != null and iconUrl != "" {this.data.author.icon_url = iconUrl }
+        if url != null and url != "" {this.data.author.url = url }
+        return this
+    }
+
+    fn setThumbnail(url: string): EmbedBuilder {
+        this.data.thumbnail = { "url": url }
+        return this
+    }
+
+    fn setImage(url: string): EmbedBuilder {
+        this.data.image = { "url": url }
+        return this
+    }
+
+    fn addField(name: string, value: string, inline?: bool): EmbedBuilder {
+        if !this.data.fields {this.data.fields = [] }
+        this.data.fields.push({
+            "name": name,
+            "value": value,
+            "inline": inline == true
+        })
+        return this
+    }
+
+    fn addFields(fields: array): EmbedBuilder {
+        if !this.data.fields {this.data.fields = [] }
+        for item in fields {this.data.fields.push(item) }
+        return this
+    }
+
+    fn toJSON(): EmbedPayload {
+        return this.data
     }
 }
 
@@ -355,4 +603,174 @@ export fn autocompleteChoices(choices: array): object {
 
 export fn choice(name: string, value: string): object {
     return { "name": name, "value": value }
+}
+
+export fn newEmbed(): EmbedBuilder {
+    return EmbedBuilder()
+}
+
+export fn embedPayload(card: any): object {
+    return { "embeds": normalizeEmbeds([card]) }
+}
+
+export fn embedsPayload(embeds: array): object {
+    return { "embeds": normalizeEmbeds(embeds) }
+}
+
+export fn normalizeEmbed(card: any): EmbedPayload {
+    if typeof(card) == "object" and card.toJSON {
+        return card.toJSON()
+    }
+    return card
+}
+
+export fn normalizeEmbeds(embeds: array): array {
+    const out = []
+    for card in embeds {
+        out.push(normalizeEmbed(card))
+    }
+    return out
+}
+
+export fn componentsV2Payload(components: array): object {
+    return {
+        "flags": Constants.MessageFlag.IsComponentsV2,
+        "components": components
+    }
+}
+
+export fn contentComponentsPayload(content: string, components: array): object {
+    return {
+        "content": content,
+        "components": components
+    }
+}
+
+export fn actionRow(components: array): ActionRowComponent {
+    return {
+        "type": Constants.ComponentType.ActionRow,
+        "components": components
+    }
+}
+
+export fn button(style: number, label: string, customId: string): ButtonComponent {
+    return {
+        "type": Constants.ComponentType.Button,
+        "style": style,
+        "label": label,
+        "custom_id": customId
+    }
+}
+
+export fn primaryButton(label: string, customId: string): ButtonComponent {
+    return button(Constants.ButtonStyle.Primary, label, customId)
+}
+
+export fn secondaryButton(label: string, customId: string): ButtonComponent {
+    return button(Constants.ButtonStyle.Secondary, label, customId)
+}
+
+export fn successButton(label: string, customId: string): ButtonComponent {
+    return button(Constants.ButtonStyle.Success, label, customId)
+}
+
+export fn dangerButton(label: string, customId: string): ButtonComponent {
+    return button(Constants.ButtonStyle.Danger, label, customId)
+}
+
+export fn linkButton(label: string, url: string): ButtonComponent {
+    return {
+        "type": Constants.ComponentType.Button,
+        "style": Constants.ButtonStyle.Link,
+        "label": label,
+        "url": url
+    }
+}
+
+export fn premiumButton(skuId: string): ButtonComponent {
+    return {
+        "type": Constants.ComponentType.Button,
+        "style": Constants.ButtonStyle.Premium,
+        "sku_id": skuId
+    }
+}
+
+export fn disabled(component: ButtonComponent): ButtonComponent {
+    component.disabled = true
+    return component
+}
+
+export fn emoji(component: ButtonComponent, emojiData: object): ButtonComponent {
+    component.emoji = emojiData
+    return component
+}
+
+export fn textDisplay(content: string): TextDisplayComponent {
+    return {
+        "type": Constants.ComponentType.TextDisplay,
+        "content": content
+    }
+}
+
+export fn section(components: array, accessory: object): object {
+    return {
+        "type": Constants.ComponentType.Section,
+        "components": components,
+        "accessory": accessory
+    }
+}
+
+export fn thumbnail(url: string): object {
+    return {
+        "type": Constants.ComponentType.Thumbnail,
+        "media": { "url": url }
+    }
+}
+
+export fn mediaItem(url: string): object {
+    return { "media": { "url": url } }
+}
+
+export fn mediaGallery(items: array): object {
+    return {
+        "type": Constants.ComponentType.MediaGallery,
+        "items": items
+    }
+}
+
+export fn separator(): object {
+    return {
+        "type": Constants.ComponentType.Separator
+    }
+}
+
+export fn largeSeparator(): object {
+    return {
+        "type": Constants.ComponentType.Separator,
+        "spacing": Constants.SeparatorSpacing.Large
+    }
+}
+
+export fn container(components: array): object {
+    return {
+        "type": Constants.ComponentType.Container,
+        "components": components
+    }
+}
+
+export fn label(labelText: string, component: object): object {
+    return {
+        "type": Constants.ComponentType.Label,
+        "label": labelText,
+        "component": component
+    }
+}
+
+export fn textInput(customId: string, labelText: string, style: number): object {
+    return {
+        "type": Constants.ComponentType.TextInput,
+        "custom_id": customId,
+        "label": labelText,
+        "style": style
+    }
 }

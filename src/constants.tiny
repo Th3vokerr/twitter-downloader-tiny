@@ -73,3 +73,52 @@ export enum ApplicationCommandType {
     User = 2,
     Message = 3
 }
+
+export enum MessageFlag {
+    Crossposted = 1,
+    IsCrosspost = 2,
+    SuppressEmbeds = 4,
+    SourceMessageDeleted = 8,
+    Urgent = 16,
+    HasThread = 32,
+    Ephemeral = 64,
+    Loading = 128,
+    FailedToMentionSomeRolesInThread = 256,
+    SuppressNotifications = 4096,
+    IsVoiceMessage = 8192,
+    HasSnapshot = 16384,
+    IsComponentsV2 = 32768
+}
+
+export enum ComponentType {
+    ActionRow = 1,
+    Button = 2,
+    StringSelect = 3,
+    TextInput = 4,
+    UserSelect = 5,
+    RoleSelect = 6,
+    MentionableSelect = 7,
+    ChannelSelect = 8,
+    Section = 9,
+    TextDisplay = 10,
+    Thumbnail = 11,
+    MediaGallery = 12,
+    File = 13,
+    Separator = 14,
+    Container = 17,
+    Label = 18
+}
+
+export enum ButtonStyle {
+    Primary = 1,
+    Secondary = 2,
+    Success = 3,
+    Danger = 4,
+    Link = 5,
+    Premium = 6
+}
+
+export enum SeparatorSpacing {
+    Small = 1,
+    Large = 2
+}

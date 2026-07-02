@@ -1,6 +1,9 @@
 import "../gateway.tiny" as Discord;
 import "../commands.tiny" as Commands;
 import "../twitter.tiny" as Twitter;
+import std "io";
+import std "math";
+import std "http";
 
 export fn info() {
     const cmd = Discord.CommandBuilder()
@@ -11,6 +14,7 @@ export fn info() {
 }
 
 export fn run(interaction: Discord.Interaction, client: Discord.Client) {
+    interaction.defer()
     const link: string = interaction.getStringOption("link")
     if !(link.startsWith("https://x.com/") or link.startsWith("https://twitter.com/") or link.includes("/status/") or link.includes("/status")) {
         interaction.reply("Invalid link")
@@ -19,11 +23,34 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
     const links = Twitter.getTwitterVideos(link)
 
     if !links.length() {
-        interaction.reply("not found")
+        interaction.followUp("not found")
         return
     }
 
     const highestQuality = links[links.length() - 1]
 
-    interaction.reply(highestQuality.url)
+    const actionRow =[]
+    for link in links {
+         const head = await http.request({
+                method: "HEAD",
+                url: link.url
+            })
+
+        const length = head.headers["Content-Length"]
+        const filesize = math.round(math.toInt(length) / 1_048_576)
+        actionRow.push(client.tempPrimaryButton(`${link.quality} (${filesize} MB)`, fn(i, _) {
+            if i.member.user.id != interaction.member.user.id {
+                return i.replyEphemeral("fuck off nigger")
+            }
+            i.reply(link.url)
+            interaction.deleteReply()
+        }))
+    }
+
+    const container = Discord.container([
+    Discord.textDisplay("## Download"),
+    Discord.actionRow(actionRow)
+    ])
+
+    interaction.followUpComponents([container])
 }

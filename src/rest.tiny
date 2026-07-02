@@ -80,7 +80,7 @@ export fn unpinMessage(token: string, channelId: string, messageId: string): any
 }
 
 export fn respondToInteraction(token: string, interactionId: string, interactionToken: string, payload: object): any {
-    return post(token, `/interactions/${interactionId}/${interactionToken}/callback`, payload)
+    return post(token, `/interactions/${interactionId}/${interactionToken}/callback?wait=true`, payload)
 }
 
 export fn editInteractionResponse(token: string, applicationId: string, interactionToken: string, payload: object): any {

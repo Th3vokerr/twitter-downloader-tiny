@@ -216,13 +216,14 @@ export fn getTwitterVideos(tweetUrl: string): array {
                 if typeof variant.bitrate != "null" {
                     bitrate = variant.bitrate
                 }
-
+                const duration = media.video_info.duration_millis ?? 0
                 const video = {
                     type: media.type,
                     quality: videoQualityFromUrl(variant.url),
                     bitrate: bitrate,
                     url: variant.url,
-                    cover: media.media_url_https
+                    cover: media.media_url_https,
+                    duration: duration
                 }
                 videos.push(video)
             }
