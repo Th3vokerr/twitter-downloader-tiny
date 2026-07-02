@@ -12,7 +12,11 @@ let vm = runtime.newVM({
 vm.loadBytecode(runtime.compileFile("./src/main.tiny"))
 
 spawn() fn() {
-    vm.run()
+    try {
+        vm.run()
+    } catch e {
+        io.println(e)
+    }
 }
 
 const server = http.server({
@@ -38,7 +42,7 @@ server.post("/update", fn(i) {
 
     newVM.loadBytecode(runtime.compileFile("./src/main.tiny"))
 
-    vm.reset()
+    try { vm.reset() } catch e {}
 
     vm = newVM
 
