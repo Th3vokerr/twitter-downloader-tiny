@@ -1,0 +1,13 @@
+import "../gateway.tiny" as Discord;
+import "../commands.tiny" as Commands;
+
+export fn info() {
+    const cmd = Discord.CommandBuilder()
+    cmd.setName("test")
+    cmd.setDescription("Test")
+    return cmd
+}
+
+export fn run(interaction: Discord.Interaction, client: Discord.Client) {
+    interaction.reply("test")
+}
