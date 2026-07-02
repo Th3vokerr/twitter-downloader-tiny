@@ -22,8 +22,7 @@ const server = http.server({
 
 server.post("/update", fn(i) {
     const data = json.parse(i.body)
-    io.clear()
-    const req = process.run("git", ["pull"])
+    const req = process.run("git",["pull"])
     if !req.success {
         return http.json({
             success: false,
@@ -44,7 +43,11 @@ server.post("/update", fn(i) {
     vm = newVM
 
     spawn() fn() {
-        newVM.run()
+        try {
+            newVM.run()
+        } catch e {
+            io.println(e)
+        }
     }
 
     return http.json({
