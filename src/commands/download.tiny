@@ -1,7 +1,6 @@
 import "../gateway.tiny" as Discord;
 import "../commands.tiny" as Commands;
-import "../twitter.tiny" as Twitter;
-import std "io";
+import "../twitter.tiny" as Twitter
 import std "math";
 import std "http";
 
