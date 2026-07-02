@@ -610,7 +610,7 @@ export class Client {
         const botInstance = this
 
         spawn() fn() {
-            while liveConn.isOpen() {
+            while this.running and liveConn.isOpen() {
                 botInstance.heartbeatSentTime = time.nowMs()
                 liveConn.sendJson({"op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
                 time.sleep(interval)
@@ -628,7 +628,7 @@ export class Client {
         if this.presence {identify.d.presence = this.presence }
         this.conn.sendJson(identify)
 
-        while this.conn.isOpen() {
+        while this.running and this.conn.isOpen() {
             let payload: any = null
             try {
                 payload = this.conn.readJson()
