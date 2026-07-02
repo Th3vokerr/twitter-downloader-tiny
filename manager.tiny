@@ -42,8 +42,6 @@ server.post("/update", fn(i) {
 
     newVM.loadBytecode(runtime.compileFile("./src/main.tiny"))
 
-    try { vm.reset() } catch e {}
-
     vm = newVM
 
     spawn() fn() {

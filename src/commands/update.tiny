@@ -22,6 +22,8 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
     const msg = client.sendMessage(interaction.channelId, "Updating...")
     const id: string = json.parse(msg.body).id
 
+    client.stop()
+
     http.post("http://localhost:3333/update", json.stringify({
         messageID: id,
         channelID: interaction.channelId

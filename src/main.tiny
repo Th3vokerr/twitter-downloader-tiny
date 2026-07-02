@@ -101,3 +101,5 @@ spawn() fn() {
 }
 
 bot.start()
+
+io.println("ended")

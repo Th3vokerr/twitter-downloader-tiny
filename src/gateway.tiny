@@ -172,6 +172,8 @@ export class Client {
     field presences = {}
     field voiceStates = {}
 
+    field private running = true
+
     field logger: function
 
     fn init(config: BotConfig) {
@@ -579,11 +581,15 @@ export class Client {
     }
 
     fn start() {
-        while true {
+        while this.running {
             this.connectGateway()
             this.log("Reconnecting to Discord Gateway...")
             time.sleep(1000)
         }
+    }
+
+    fn stop() {
+        this.running = false
     }
 
     fn connectGateway() {
