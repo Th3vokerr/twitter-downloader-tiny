@@ -1,6 +1,13 @@
 {
   "version": 1,
   "dependencies": {
+    "TinyColors": {
+      "source": "github:confh/TinyColors",
+      "version": "main",
+      "resolved": "github:confh/TinyColors@main",
+      "owner": "confh",
+      "repo": "TinyColors"
+    },
     "TinyDotEnv": {
       "source": "github:confh/TinyDotEnv",
       "version": "main",

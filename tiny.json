@@ -11,6 +11,11 @@
     "start": "tiny run"
   },
   "dependencies": {
+    "TinyColors": {
+      "source": "github:confh/TinyColors",
+      "version": "main",
+      "path": ""
+    },
     "TinyDotEnv": {
       "source": "github:confh/TinyDotEnv",
       "version": "main",

@@ -9,5 +9,11 @@ export fn info() {
 }
 
 export fn run(interaction: Discord.Interaction, client: Discord.Client) {
-    interaction.replyEmbed("Pong", `**Ping:** ${client.latency}ms`)
+    interaction.replyComponents([
+        Discord.container([
+            Discord.textDisplay("## Pong"),
+            Discord.separator(),
+            Discord.textDisplay(`**Ping:** ${client.latency}`)
+        ])
+    ])
 }

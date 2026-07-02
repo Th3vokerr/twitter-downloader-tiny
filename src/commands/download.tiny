@@ -17,7 +17,7 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
     interaction.defer()
     const link: string = interaction.getStringOption("link")
     if !(link.startsWith("https://x.com/") or link.startsWith("https://twitter.com/") or link.includes("/status/") or link.includes("/status")) {
-        interaction.reply("Invalid link")
+        interaction.followUp("Invalid link")
         return
     }
     const links = Twitter.getTwitterVideos(link)

@@ -6,7 +6,8 @@ import std "runtime";
 import std "object";
 import lib "confh/TinyDotEnv" as TinyDotEnv;
 import std "process";
-
+import lib "confh/TinyColors" as TinyColors
+import std "observer";
 TinyDotEnv.loadEnv()
 
 const bot = Discord.Client({
@@ -14,6 +15,10 @@ const bot = Discord.Client({
     intents: Discord.Intents.Guilds,
     logging: true
 })
+
+bot.logger = fn(...info) {
+    io.println(TinyColors.cyan("[TinyBot] "),...info)
+}
 
 const commandsData = {}
 const commandsInvokes = {}
@@ -65,10 +70,22 @@ bot.onInteraction(fn(interaction, client) {
     const name = interaction.getName()
 
     if commandsInvokes[name] {
-        commandsInvokes[name].call("run", [interaction, client])
+        try {
+            commandsInvokes[name].call("run",[interaction, client])
+        } catch e {
+            io.println(TinyColors.red("[Command Error] " + e.message))
+        }
     } else {
         interaction.reply("command does not exist")
     }
 })
+
+spawn() fn() {
+    observer.start({
+        host: "0.0.0.0",
+        port: 5555,
+        password: "nigger"
+    })
+}
 
 bot.start()
