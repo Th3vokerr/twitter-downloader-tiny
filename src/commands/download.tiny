@@ -31,10 +31,10 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
 
     const actionRow =[]
     for link in links {
-         const head = await http.request({
-                method: "HEAD",
-                url: link.url
-            })
+        const head = await http.request({
+            method: "HEAD",
+            url: link.url
+        })
 
         const length = head.headers["Content-Length"]
         const filesize = math.round(math.toInt(length) / 1_048_576)

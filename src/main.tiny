@@ -8,6 +8,14 @@ import lib "confh/TinyDotEnv" as TinyDotEnv;
 import std "process";
 import lib "confh/TinyColors" as TinyColors
 import std "observer";
+
+interface PreviousMessageState {
+    channelID: string
+    messageID: string
+}
+
+external const previousUpdateMessage: PreviousMessageState | null
+
 TinyDotEnv.loadEnv()
 
 const bot = Discord.Client({
@@ -54,6 +62,10 @@ await commandsTasks
 bot.onReady(fn(user) {
     bot.setPresence("online", "i download twitter videos make america great again")
     io.println(`Logged in as ${user.username}#${user.discriminator}`)
+
+    if previousUpdateMessage {
+        bot.editMessage(previousUpdateMessage?.channelID, previousUpdateMessage?.messageID, "Update completed")
+    }
 
     const commands =[]
 

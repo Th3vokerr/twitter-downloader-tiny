@@ -1,0 +1,55 @@
+import std "runtime";
+import std "http";
+import std "io";
+import std "process";
+import std "json"
+
+let vm = runtime.newVM({
+    disableJIT: true,
+    runMainOnLoad: false
+})
+
+vm.loadBytecode(runtime.compileFile("./src/main.tiny"))
+
+spawn() fn() {
+    vm.run()
+}
+
+const server = http.server({
+    port: 3333,
+    host: "127.0.0.1"
+})
+
+server.post("/update", fn(i) {
+    const data = json.parse(i.body)
+    io.clear()
+    const req = process.run("git", ["pull"])
+    if !req.success {
+        return http.json({
+            success: false,
+            output: req.stderr
+        })
+    }
+    const newVM = runtime.newVM({
+        disableJIT: true,
+        runMainOnLoad: false
+    })
+
+    newVM.setGlobal("previousUpdateMessage", data)
+
+    newVM.loadBytecode(runtime.compileFile("./src/main.tiny"))
+
+    vm.reset()
+
+    vm = newVM
+
+    spawn() fn() {
+        newVM.run()
+    }
+
+    return http.json({
+        success: true
+    })
+})
+
+server.start()

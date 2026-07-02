@@ -1,0 +1,29 @@
+import "../gateway.tiny" as Discord;
+import "../commands.tiny" as Commands;
+import std "json";
+import std "http";
+
+export fn info() {
+    const cmd = Discord.CommandBuilder()
+    cmd.setName("update")
+    cmd.setDescription("Update the bot")
+    return cmd
+}
+
+const owners = ["538352367654141952", "1514723282560094302"]
+
+export fn run(interaction: Discord.Interaction, client: Discord.Client) {
+    if !owners.contains(interaction.member.user.id) {
+        return interaction.reply("this command is owner only")
+    }
+
+    interaction.reply("Sent update request...")
+
+    const msg = client.sendMessage(interaction.channelId, "Updating...")
+    const id: string = json.parse(msg.body).id
+
+    http.post("http://localhost:3333/update", json.stringify({
+        messageID: id,
+        channelID: interaction.channelId
+    }))
+}
