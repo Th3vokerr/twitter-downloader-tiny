@@ -1,4 +1,7 @@
 import std "time";
+import "constants.tiny" as Constants
+import "commands.tiny" as CommandsModule
+import type "gateway.tiny" as Gateway
 
 export class Message {
     field id = ""
@@ -12,10 +15,10 @@ export class Message {
     field embeds = []
     field timestamp: number
     field editedTimestamp: number
-    field raw = null
-    field client: any
+    field raw: object
+    field client: Gateway.Client
 
-    fn init(data: object, client: any) {
+    fn init(data: object, client: Gateway.Client) {
         this.raw = data
         this.id = data.id
         this.channelId = data.channel_id
@@ -33,43 +36,83 @@ export class Message {
         this.client = client
     }
 
-    fn reply(textContent: string) {
+    fn reply(textContent: string): any {
         return this.client.replyTo(this.channelId, this.id, textContent)
     }
 
-    fn replyPayload(payload: object) {
+    fn replyPayload(payload: object): any {
         return this.client.replyPayload(this.channelId, this.id, payload)
     }
 
-    fn edit(textContent: string) {
+    fn replyFile(file: object, textContent?: string): any {
+        return this.client.replyFile(this.channelId, this.id, file, textContent)
+    }
+
+    fn replyFiles(files: array, payload?: object): any {
+        return this.client.replyFiles(this.channelId, this.id, files, payload)
+    }
+
+    fn replyEmbeds(embeds: array): any {
+        return this.replyPayload(CommandsModule.embedsPayload(embeds))
+    }
+
+    fn replyComponents(components: array): any {
+        return this.client.replyComponents(this.channelId, this.id, components)
+    }
+
+    fn replyActionRow(components: array): any {
+        return this.client.replyActionRow(this.channelId, this.id, components)
+    }
+
+    fn edit(textContent: string): any {
         return this.client.editMessage(this.channelId, this.id, textContent)
     }
 
-    fn editPayload(payload: object) {
+    fn editPayload(payload: object): any {
         return this.client.editMessagePayload(this.channelId, this.id, payload)
     }
 
-    fn deleteMessage() {
+    fn editFiles(files: array, payload?: object): any {
+        return this.client.editMessageFiles(this.channelId, this.id, files, payload)
+    }
+
+    fn editEmbed(card: CommandsModule.EmbedBuilder | object): any {
+        return this.client.editEmbed(this.channelId, this.id, card)
+    }
+
+    fn editEmbeds(embeds: array): any {
+        return this.client.editEmbeds(this.channelId, this.id, embeds)
+    }
+
+    fn editComponents(components: array): any {
+        return this.client.editComponents(this.channelId, this.id, components)
+    }
+
+    fn editActionRow(components: array): any {
+        return this.client.editActionRow(this.channelId, this.id, components)
+    }
+
+    fn deleteMessage(): any {
         return this.client.deleteMessage(this.channelId, this.id)
     }
 
-    fn react(emoji: string) {
+    fn react(emoji: string): any {
         return this.client.addReaction(this.channelId, this.id, emoji)
     }
 
-    fn unreact(emoji: string) {
+    fn unreact(emoji: string): any {
         return this.client.removeOwnReaction(this.channelId, this.id, emoji)
     }
 
-    fn pin() {
+    fn pin(): any {
         return this.client.pinMessage(this.channelId, this.id)
     }
 
-    fn unpin() {
+    fn unpin(): any {
         return this.client.unpinMessage(this.channelId, this.id)
     }
 
-    fn typing() {
+    fn typing(): any {
         return this.client.triggerTyping(this.channelId)
     }
 
@@ -82,6 +125,24 @@ export fn contentPayload(content: string): object {
     return { "content": content }
 }
 
+export fn componentsPayload(components: array): object {
+    return { "components": components }
+}
+
+export fn componentsV2Payload(components: array): object {
+    return {
+        "flags": Constants.MessageFlag.IsComponentsV2,
+        "components": components
+    }
+}
+
+export fn contentComponentsPayload(content: string, components: array): object {
+    return {
+        "content": content,
+        "components": components
+    }
+}
+
 export fn replyPayload(messageId: string, content: string): object {
     return {
         "content": content,
@@ -89,14 +150,12 @@ export fn replyPayload(messageId: string, content: string): object {
     }
 }
 
-export fn embedPayload(title: string, description: string, color: number): object {
-    return {
-        "embeds": [{
-            "title": title,
-            "description": description,
-            "color": color
-        }]
-    }
+export fn embedPayload(card: CommandsModule.EmbedBuilder | object): object {
+    return CommandsModule.embedPayload(card)
+}
+
+export fn embedsPayload(embeds: array): object {
+    return CommandsModule.embedsPayload(embeds)
 }
 
 export fn withAllowedMentions(payload: object, allowedMentions: object): object {

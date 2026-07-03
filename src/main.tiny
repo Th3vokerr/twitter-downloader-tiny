@@ -103,5 +103,3 @@ if !previousUpdateMessage {
 }
 
 bot.start()
-
-io.println("ended")

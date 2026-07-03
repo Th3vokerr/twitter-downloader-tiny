@@ -1,0 +1,25 @@
+import "../gateway.tiny" as Discord;
+import "../commands.tiny" as Commands;
+import "../youtube.tiny" as Yt
+import std "fs";
+
+export fn info() {
+    const cmd = Discord.CommandBuilder()
+    cmd.setName("youtube")
+    cmd.setDescription("Download youtube video")
+    cmd.stringOption("url", "url of the youtube video", true)
+    return cmd
+}
+
+export fn run(interaction: Discord.Interaction, client: Discord.Client) {
+    interaction.defer()
+    const url = interaction.getStringOption("url")
+    const data = Yt.getYoutubeVideos(url)
+
+    if !data.length() {
+        return interaction.replyEphemeral("video not found")
+    }
+
+    const file = Discord.fileFromBytes("yt.mp4", fs.readBytes(data[0].file))
+    interaction.followUpFile(file)
+}

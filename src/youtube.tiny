@@ -1,0 +1,89 @@
+import std "json";
+import std "process";
+import std "io";
+import std "time";
+import std "fs";
+
+fn isYoutubeUrl(videoUrl: string): bool {
+    return videoUrl.includes("youtube.com/watch") or videoUrl.includes("youtu.be/") or videoUrl.includes("youtube.com/shorts")
+}
+
+// export fn getYoutubeVideos(videoUrl: string): array {
+//     if !isYoutubeUrl(videoUrl) {
+//         return[]
+//     }
+
+//     const cmd = `yt-dlp -J --no-playlist ${videoUrl}`
+//     const result = process.shell(cmd, {
+//         stdout: true,
+//         stderr: true
+//     })
+
+//     if !result.success or !result.stdout {
+//         io.println(result.stderr)
+//         return[]
+//     }
+
+//     const data = json.parse(result.stdout)
+//     const formats = data.formats ??[]
+
+//     if typeof formats != "array" {
+//         return[]
+//     }
+
+//     const videos: array:any =[]
+
+//     for let i = 0; i < formats.length(); i++ {
+//         const format = formats[i]
+
+//         if typeof(format) != "object" {
+//             continue
+//         }
+
+//         if format.ext != "mp4" {
+//             continue
+//         }
+//         if format.vcodec == "none" {
+//             continue
+//         }
+
+//         const video = {
+//             type: "youtube",
+//             quality: `${format.width ?? 0}x${format.height ?? 0}`,
+//             height: format.height ?? 0,
+//             width: format.width ?? 0,
+//             bitrate: format.tbr ?? 0,
+//             fps: format.fps ?? 0,
+//             url: format.url,
+//             cover: data.thumbnail ?? "",
+//             duration: data.duration ?? 0,
+//             title: data.title ?? "",
+//             format_id: format.format_id ?? ""
+//         }
+//         videos.push(video)
+//     }
+//     return videos
+// }
+export fn getYoutubeVideos(videoUrl: string): array {
+    if !isYoutubeUrl(videoUrl) {
+        return[]
+    }
+    const outputPath = `./output/${time.nowMs()}.mp4`
+    const cmd = `yt-dlp --cookies ./src/cookies.txt -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/best --merge-output-format mp4 -o ${outputPath} ${videoUrl}`
+
+    const result = process.shell(cmd, {
+        stdout: true
+    })
+
+    if !result.success {
+        io.println(result.stderr)
+        return[]
+    }
+
+    const file = {
+        type: "youtube",
+        file: outputPath,
+        source: videoUrl
+    }
+    return [file]
+}

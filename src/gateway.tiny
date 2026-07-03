@@ -97,7 +97,17 @@ export interface MessagePayload {
     components?: array,
     allowed_mentions?: object,
     message_reference?: object,
-    flags?: number
+    flags?: number,
+    files?: array
+}
+
+export interface FilePayload {
+    field?: string,
+    filename?: string,
+    contentType?: string,
+    path?: string,
+    bytes?: buffer,
+    text?: string
 }
 
 export const Message = MessageModule.Message
@@ -140,6 +150,9 @@ export fn largeSeparator(): object { return CommandsModule.largeSeparator() }
 export fn container(components: array): object { return CommandsModule.container(components) }
 export fn label(labelText: string, component: object): object { return CommandsModule.label(labelText, component) }
 export fn textInput(customId: string, labelText: string, style: number): object { return CommandsModule.textInput(customId, labelText, style) }
+export fn fileFromBytes(filename: string, bytes: buffer, contentType?: string, field?: string): CommandsModule.FilePayload { return CommandsModule.fileFromBytes(filename, bytes, contentType, field) }
+export fn fileFromPath(path: string, filename?: string, contentType?: string, field?: string): CommandsModule.FilePayload { return CommandsModule.fileFromPath(path, filename, contentType, field) }
+export fn fileFromText(filename: string, text: string, contentType?: string, field?: string): CommandsModule.FilePayload { return CommandsModule.fileFromText(filename, text, contentType, field) }
 
 export class Client {
     field token = ""
@@ -152,7 +165,6 @@ export class Client {
     field latency = 0
     field heartbeatSentTime = 0
     field presence = null
-    field onlineSince = 0
 
     field rawCallback = null
     field readyCallback = null
@@ -173,12 +185,11 @@ export class Client {
     field presences = {}
     field voiceStates = {}
 
-    field running = true
+    field private running = true
 
     field logger: function
 
     fn init(config: BotConfig) {
-        this.onlineSince = time.nowMs()
         this.token = config.token
         this.logger = fn(...info: any) {
             io.println(`[TinyBot]`,...info)
@@ -226,6 +237,19 @@ export class Client {
 
     fn sendMessagePayload(channelId: string, payload: MessagePayload): any {
         return Rest.sendMessage(this.token, channelId, payload)
+    }
+
+    fn sendFile(channelId: string, file: FilePayload, content?: string): any {
+        const payload = { "files": [file] }
+        if content != null and content != "" {payload.content = content }
+        return this.sendMessagePayload(channelId, payload)
+    }
+
+    fn sendFiles(channelId: string, files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.sendMessagePayload(channelId, body)
     }
 
     fn sendComponents(channelId: string, components: array): any {
@@ -303,6 +327,19 @@ export class Client {
         return Rest.sendMessage(this.token, channelId, payload)
     }
 
+    fn replyFile(channelId: string, messageId: string, file: FilePayload, content?: string): any {
+        const payload = { "files": [file] }
+        if content != null and content != "" {payload.content = content }
+        return this.replyPayload(channelId, messageId, payload)
+    }
+
+    fn replyFiles(channelId: string, messageId: string, files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.replyPayload(channelId, messageId, body)
+    }
+
     fn replyComponents(channelId: string, messageId: string, components: array): any {
         const payload = CommandsModule.componentsV2Payload(components)
         payload.message_reference = {"message_id": messageId }
@@ -319,6 +356,13 @@ export class Client {
 
     fn editMessagePayload(channelId: string, messageId: string, payload: object): any {
         return Rest.editMessage(this.token, channelId, messageId, payload)
+    }
+
+    fn editMessageFiles(channelId: string, messageId: string, files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.editMessagePayload(channelId, messageId, body)
     }
 
     fn editEmbed(channelId: string, messageId: string, card: CommandsModule.EmbedBuilder | object): any {
@@ -533,6 +577,16 @@ export class Client {
         return this.sendMessage(dm.id, textContent)
     }
 
+    fn sendDmFile(userId: string, file: FilePayload, content?: string) {
+        const dm = this.createDm(userId)
+        return this.sendFile(dm.id, file, content)
+    }
+
+    fn sendDmFiles(userId: string, files: array, payload?: object) {
+        const dm = this.createDm(userId)
+        return this.sendFiles(dm.id, files, payload)
+    }
+
     fn setPresence(status: string, activityName: string) {
         const payload = {
             "op": Constants.GatewayOpcode.PresenceUpdate,
@@ -612,7 +666,7 @@ export class Client {
         const botInstance = this
 
         spawn() fn() {
-            while this.running and liveConn.isOpen() {
+            while this.running {
                 botInstance.heartbeatSentTime = time.nowMs()
                 liveConn.sendJson({"op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
                 time.sleep(interval)
@@ -630,7 +684,7 @@ export class Client {
         if this.presence {identify.d.presence = this.presence }
         this.conn.sendJson(identify)
 
-        while this.running and this.conn.isOpen() {
+        while this.running {
             let payload: any = null
             try {
                 payload = this.conn.readJson()

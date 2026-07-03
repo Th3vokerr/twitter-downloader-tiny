@@ -2,3 +2,6 @@ dist/
 *.tbc
 .tinycache/
 .env
+cookies.txt
+./src/cookies.txt
+output/

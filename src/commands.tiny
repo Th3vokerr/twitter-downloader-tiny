@@ -33,6 +33,43 @@ export interface EmbedPayload {
     fields?: array
 }
 
+export interface FilePayload {
+    field?: string,
+    filename?: string,
+    contentType?: string,
+    path?: string,
+    bytes?: buffer,
+    text?: string
+}
+
+export fn fileFromBytes(filename: string, bytes: buffer, contentType?: string, field?: string): FilePayload {
+    const file = {
+        "filename": filename,
+        "bytes": bytes
+    }
+    if contentType != null and contentType != "" {file.contentType = contentType }
+    if field != null and field != "" {file.field = field }
+    return file
+}
+
+export fn fileFromPath(path: string, filename?: string, contentType?: string, field?: string): FilePayload {
+    const file = { "path": path }
+    if filename != null and filename != "" {file.filename = filename }
+    if contentType != null and contentType != "" {file.contentType = contentType }
+    if field != null and field != "" {file.field = field }
+    return file
+}
+
+export fn fileFromText(filename: string, text: string, contentType?: string, field?: string): FilePayload {
+    const file = {
+        "filename": filename,
+        "text": text
+    }
+    if contentType != null and contentType != "" {file.contentType = contentType }
+    if field != null and field != "" {file.field = field }
+    return file
+}
+
 export interface Component {
     type: number
 }
@@ -188,6 +225,19 @@ export class Interaction {
         })
     }
 
+    fn replyFile(file: FilePayload, content?: string): any {
+        const payload = { "files": [file] }
+        if content != null and content != "" {payload.content = content }
+        return this.replyPayload(payload)
+    }
+
+    fn replyFiles(files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.replyPayload(body)
+    }
+
     fn replyComponents(components: array): any {
         return this.replyPayload(componentsV2Payload(components))
     }
@@ -253,6 +303,13 @@ export class Interaction {
         return Rest.editInteractionResponse(this.client.token, this.applicationId, this.token, payload)
     }
 
+    fn editReplyFiles(files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.editReplyPayload(body)
+    }
+
     fn editReplyEmbed(card: any): any {
         return this.editReplyPayload({ "embeds": normalizeEmbeds([card]) })
     }
@@ -281,6 +338,19 @@ export class Interaction {
 
     fn followUpPayload(payload: object): any {
         return Rest.followUpInteraction(this.client.token, this.applicationId, this.token, payload)
+    }
+
+    fn followUpFile(file: FilePayload, content?: string): any {
+        const payload = { "files": [file] }
+        if content != null and content != "" {payload.content = content }
+        return this.followUpPayload(payload)
+    }
+
+    fn followUpFiles(files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.followUpPayload(body)
     }
 
     fn followUpEmbed(card: any): any {
@@ -319,6 +389,13 @@ export class Interaction {
         return Rest.editFollowUpInteraction(this.client.token, this.applicationId, this.token, messageId, payload)
     }
 
+    fn editFollowUpFiles(messageId: string, files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.editFollowUpPayload(messageId, body)
+    }
+
     fn editFollowUpComponents(messageId: string, components: array): any {
         return this.editFollowUpPayload(messageId, componentsV2Payload(components))
     }
@@ -332,6 +409,13 @@ export class Interaction {
             "type": Constants.InteractionResponseType.UpdateMessage,
             "data": payload
         })
+    }
+
+    fn updateFiles(files: array, payload?: object): any {
+        let body = {}
+        if payload != null {body = payload }
+        body.files = files
+        return this.updatePayload(body)
     }
 
     fn update(content: string): any {
