@@ -1,5 +1,6 @@
 import "../gateway.tiny" as Discord;
 import "../commands.tiny" as Commands;
+import std "math";
 
 export fn info() {
     const cmd = Discord.CommandBuilder()
@@ -9,5 +10,11 @@ export fn info() {
 }
 
 export fn run(interaction: Discord.Interaction, client: Discord.Client) {
-    interaction.reply("test")
+    interaction.replyComponents([
+        Discord.container([
+            Discord.textDisplay("### About"),
+            Discord.separator(),
+            Discord.textDisplay(`Online since: <t:${math.round(client.onlineSince / 1000)}:R>`),
+        ])
+    ])
 }

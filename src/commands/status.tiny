@@ -1,0 +1,13 @@
+import "../gateway.tiny" as Discord;
+import "../commands.tiny" as Commands;
+
+export fn info() {
+    const cmd = Discord.CommandBuilder()
+    cmd.setName("status")
+    cmd.setDescription("View ping")
+    return cmd
+}
+
+export fn run(interaction: Discord.Interaction, client: Discord.Client) {
+    interaction.replyEmbed("Pong", `**Ping:** ${client.latency}ms`)
+}

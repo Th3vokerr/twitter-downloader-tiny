@@ -152,6 +152,7 @@ export class Client {
     field latency = 0
     field heartbeatSentTime = 0
     field presence = null
+    field onlineSince = 0
 
     field rawCallback = null
     field readyCallback = null
@@ -177,6 +178,7 @@ export class Client {
     field logger: function
 
     fn init(config: BotConfig) {
+        this.onlineSince = time.nowMs()
         this.token = config.token
         this.logger = fn(...info: any) {
             io.println(`[TinyBot]`,...info)
