@@ -17,7 +17,7 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
     const data = Yt.getYoutubeVideos(url)
 
     if !data.length() {
-        return interaction.replyEphemeral("video not found")
+        return interaction.followUp("video not found")
     }
 
     const file = Discord.fileFromBytes("yt.mp4", fs.readBytes(data[0].file))
