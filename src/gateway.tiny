@@ -457,7 +457,7 @@ export class Client {
     fn cacheUser(user: any) {
         if !user { return null }
         let userInst = user
-        if typeof(user) == "object" and !(user instanceof UserModule.User) {
+        if typeof(user) == "object" and ! (user instanceof UserModule.User) {
             userInst = UserModule.User(user)
         }
         if userInst.id { this.users[userInst.id] = userInst }
@@ -516,7 +516,7 @@ export class Client {
     fn cacheMember(guildId: string, member: any) {
         if !guildId or !member { return null }
         let memberInst = member
-        if typeof(member) == "object" and !(member instanceof MemberModule.Member) {
+        if typeof(member) == "object" and ! (member instanceof MemberModule.Member) {
             memberInst = MemberModule.Member(member)
         }
         if memberInst.user { this.cacheUser(memberInst.user) }
@@ -628,7 +628,7 @@ export class Client {
     }
 
     fn start() {
-        while this.running {
+        while true {
             this.connectGateway()
             time.sleep(1000)
         }
@@ -661,7 +661,7 @@ export class Client {
         const botInstance = this
 
         spawn() fn() {
-            while this.running and liveConn.isOpen() {
+            while liveConn.isOpen() {
                 botInstance.heartbeatSentTime = time.nowMs()
                 try {
                     liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
@@ -691,7 +691,7 @@ export class Client {
             return null
         }
 
-        while this.running and this.conn.isOpen() {
+        while this.conn.isOpen() {
             let payload: any = null
             try {
                 payload = this.conn.readJson()
@@ -773,16 +773,10 @@ export class Client {
         if payload.t == Constants.GatewayEvents.Ready {
             this.sessionId = payload.d.session_id
             this.cacheReady(payload.d)
-            if this.readyCallback {
-                const fireReady: function = this.readyCallback
-                const userData = payload.d.user
-                spawn() fn() {
-                    try {
-                        fireReady(userData)
-                    } catch err {
-                        io.println("[Gateway] ready callback error: " + err.message)
-                    }
-                }
+            const rc: function = this.readyCallback
+            if rc {
+                const userData = UserModule.User(payload.d.user)
+                rc(userData)
             }
         }
 
