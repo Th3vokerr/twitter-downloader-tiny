@@ -776,14 +776,26 @@ export class Client {
             if this.readyCallback {
                 const fireReady: function = this.readyCallback
                 const userData = payload.d.user
-                spawn() fn() { fireReady(userData) }
+                spawn() fn() {
+                    try {
+                        fireReady(userData)
+                    } catch err {
+                        io.println("[Gateway] ready callback error: " + err.message)
+                    }
+                }
             }
         }
 
         if payload.t == Constants.GatewayEvents.Resumed {
             if this.resumeCallback {
                 const fireResume: function = this.resumeCallback
-                spawn() fn() { fireResume(payload.d) }
+                spawn() fn() {
+                    try {
+                        fireResume(payload.d)
+                    } catch err {
+                        io.println("[Gateway] resume callback error: " + err.message)
+                    }
+                }
             }
         }
 
@@ -792,7 +804,13 @@ export class Client {
             if this.guildCreateCallback {
                 const fireGuildCreate: function = this.guildCreateCallback
                 const guild = payload.d
-                spawn() fn() { fireGuildCreate(guild) }
+                spawn() fn() {
+                    try {
+                        fireGuildCreate(guild)
+                    } catch err {
+                        io.println("[Gateway] guildCreate callback error: " + err.message)
+                    }
+                }
             }
         }
 
@@ -895,7 +913,13 @@ export class Client {
 
             if this.interactionCallback {
                 const fireInteraction: function = this.interactionCallback
-                spawn() fn() { fireInteraction(interactionInstance, this) }
+                spawn() fn() {
+                    try {
+                        fireInteraction(interactionInstance, this)
+                    } catch err {
+                        io.println("[Gateway] interaction callback error: " + err.message)
+                    }
+                }
             }
         }
 
