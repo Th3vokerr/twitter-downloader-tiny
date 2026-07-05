@@ -3,6 +3,7 @@ import std "http";
 import std "io";
 import std "process";
 import std "json"
+import std "os";
 
 let vm = runtime.newVM({
     disableJIT: true,
@@ -42,15 +43,18 @@ server.post("/update", fn(i) {
 
     newVM.loadBytecode(runtime.compileFile("./src/main.tiny"))
 
-    vm.reset()
+    vm.stop()
 
     vm = newVM
+
+    io.clear()
 
     spawn() fn() {
         try {
             newVM.run()
         } catch e {
             io.println(e)
+            process.exit(-1)
         }
     }
 

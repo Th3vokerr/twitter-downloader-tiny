@@ -627,7 +627,7 @@ export class Client {
     }
 
     fn start() {
-        while true {
+        while this.running {
             this.connectGateway()
             time.sleep(1000)
         }
@@ -660,7 +660,7 @@ export class Client {
         const botInstance = this
 
         spawn() fn() {
-            while liveConn.isOpen() {
+            while this.running and liveConn.isOpen() {
                 botInstance.heartbeatSentTime = time.nowMs()
                 try {
                     liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
@@ -690,7 +690,7 @@ export class Client {
             return null
         }
 
-        while this.conn.isOpen() {
+        while this.running and this.conn.isOpen() {
             let payload: any = null
             try {
                 payload = this.conn.readJson()
