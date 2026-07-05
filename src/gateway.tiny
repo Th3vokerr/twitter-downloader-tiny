@@ -755,7 +755,16 @@ export class Client {
             return true
         }
 
+        if payload.op == Constants.GatewayOpcode.Heartbeat {
+            this.conn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": this.sequence })
+            return true
+        }
+
         if payload.op == Constants.GatewayOpcode.Reconnect {
+            return false
+        }
+
+        if payload.op == Constants.GatewayOpcode.InvalidSession {
             return false
         }
 
