@@ -39,7 +39,7 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
         const filesize = math.round(math.toInt(length) / 1_048_576)
         actionRow.push(client.tempPrimaryButton(`${link.quality} (${filesize} MB)`, fn(i: Discord.Interaction, _: any) {
             if i.member.user.id != interaction.member.user.id {
-                return i.replyEphemeral("fuck off nigger")
+                return i.replyEphemeral("fuck off")
             }
             i.reply(link.url)
             interaction.deleteReply()
