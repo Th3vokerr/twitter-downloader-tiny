@@ -13,7 +13,7 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
         Discord.container([
             Discord.textDisplay("## Pong"),
             Discord.separator(),
-            Discord.textDisplay(`**Ping:** ${client.latency}`)
+            Discord.textDisplay(`**Ping:** ${client.latency}ms`)
         ])
     ])
 }

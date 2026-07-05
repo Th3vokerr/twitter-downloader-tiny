@@ -136,7 +136,7 @@ export class Client {
     field token = ""
     field intents = 33280
     field logging = false
-    field conn = null
+    field conn: websocket.Conn | null = null
     field sessionId = ""
     field sequence = null
     field user: UserModule.User = null
@@ -670,6 +670,10 @@ export class Client {
                     break
                 }
                 time.sleep(interval)
+            }
+
+            if !this.running {
+                liveConn?.close(1000)
             }
         }
 
