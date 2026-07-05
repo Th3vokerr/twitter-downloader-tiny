@@ -23,7 +23,7 @@ export fn getYoutubeVideos(videoUrl: string): array:YoutubeVideo {
         return []
     }
     const outputPath = `./output/${time.nowMs()}.mp4`
-    const cmd = `yt-dlp --js-runtimes node --extractor-args "youtube:player_client=web" --no-check-certificate --cookies src/cookies.txt -f "bv*+ba/b" --merge-output-format mp4 -o "${outputPath}" "${videoUrl}"`
+    const cmd = `yt-dlp --extractor-args "youtube:player_client=web" --no-check-certificate --cookies src/cookies.txt -f "bv*+ba/b" --merge-output-format mp4 -o "${outputPath}" "${videoUrl}"`
 
     const result = process.shell(cmd, {
         stdout: true,

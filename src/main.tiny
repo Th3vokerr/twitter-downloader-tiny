@@ -80,16 +80,18 @@ bot.onReady(fn(user) {
 })
 
 bot.onInteraction(fn(interaction, client) {
-    const name = interaction.getName()
+    spawn(interaction, client) fn(interaction, client) {
+        const name = interaction.getName()
 
-    if commandsInvokes[name] {
-        try {
-            commandsInvokes[name].call("run", [interaction, client])
-        } catch e {
-            io.println(TinyColors.red("[Command Error] " + e.message))
+        if commandsInvokes[name] {
+            try {
+                commandsInvokes[name].call("run", [interaction, client])
+            } catch e {
+                io.println(TinyColors.red("[Command Error] " + e.message))
+            }
+        } else {
+            interaction.reply("command does not exist")
         }
-    } else {
-        interaction.reply("command does not exist")
     }
 })
 
