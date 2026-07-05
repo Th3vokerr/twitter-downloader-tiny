@@ -109,9 +109,7 @@ export fn componentsV2Payload(components: array): object {
 export fn contentComponentsPayload(content: string, components: array): object { return CommandsModule.contentComponentsPayload(content, components) }
 export fn actionRow(components: array): CommandsModule.ActionRowComponent { return CommandsModule.actionRow(components) }
 export fn button(style: ButtonStyle, label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.button(style, label, customId) }
-export fn primaryButton(label: string, customId: string): CommandsModule.ButtonComponent {
-    return CommandsModule.primaryButton(label, customId)
-}
+export fn primaryButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.primaryButton(label, customId) }
 export fn secondaryButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.secondaryButton(label, customId) }
 export fn successButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.successButton(label, customId) }
 export fn dangerButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.dangerButton(label, customId) }
@@ -147,6 +145,7 @@ export class Client {
 
     field rawCallback = null
     field readyCallback = null
+    field calledReady = false
     field resumeCallback = null
     field guildCreateCallback = null
     field messageCallback = null
@@ -773,10 +772,10 @@ export class Client {
         if payload.t == Constants.GatewayEvents.Ready {
             this.sessionId = payload.d.session_id
             this.cacheReady(payload.d)
-            const rc: function = this.readyCallback
-            if rc {
+            if !this.calledReady and this.readyCallback {
                 const userData = UserModule.User(payload.d.user)
-                rc(userData)
+                this.readyCallback(userData)
+                this.calledReady = true
             }
         }
 

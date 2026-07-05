@@ -60,9 +60,9 @@ for file in fs.readDir(path) {
 
 await commandsTasks
 
-bot.onReady(fn(user: DiscordUser.User) {
+bot.onReady(fn(user) {
     bot.setPresence("online", "i download twitter videos make america great again")
-    io.println(`Logged in as ${user.username}#${user.discriminator}`)
+    io.println(`Logged in as ${user.tag()}`)
 
     if previousUpdateMessage {
         bot.editMessage(previousUpdateMessage?.channelID, previousUpdateMessage?.messageID, "Update completed")
@@ -79,7 +79,7 @@ bot.onReady(fn(user: DiscordUser.User) {
     io.println(`Registered ${commands.length()} slash commands`)
 })
 
-bot.onInteraction(fn(interaction: DiscordCommands.Interaction, client: Discord.Client) {
+bot.onInteraction(fn(interaction, client) {
     const name = interaction.getName()
 
     if commandsInvokes[name] {
