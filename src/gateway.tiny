@@ -657,26 +657,6 @@ export class Client {
         }
         const interval = hello.d.heartbeat_interval
 
-        const liveConn = this.conn
-        const botInstance = this
-
-        spawn() fn() {
-            while this.running and liveConn.isOpen() {
-                botInstance.heartbeatSentTime = time.nowMs()
-                try {
-                    liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
-                } catch err {
-                    io.println(err)
-                    break
-                }
-                time.sleep(interval)
-            }
-
-            if !this.running {
-                liveConn?.close(1000)
-            }
-        }
-
         const identify = {
             "op": Constants.GatewayOpcode.Identify,
             "d": {
@@ -693,6 +673,29 @@ export class Client {
             io.println(err)
             this.closeGateway()
             return null
+        }
+
+        const liveConn = this.conn
+        const botInstance = this
+
+        spawn() fn() {
+            // Wait for a fraction of the heartbeat interval before sending the first heartbeat
+            time.sleep(interval * 0.5)
+
+            while this.running and liveConn.isOpen() {
+                botInstance.heartbeatSentTime = time.nowMs()
+                try {
+                    liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
+                } catch err {
+                    io.println(err)
+                    break
+                }
+                time.sleep(interval)
+            }
+
+            if !this.running {
+                liveConn?.close(1000)
+            }
         }
 
         while this.running and this.conn.isOpen() {
