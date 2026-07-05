@@ -61,7 +61,7 @@ for file in fs.readDir(path) {
 await commandsTasks
 
 bot.onReady(fn(user) {
-    bot.setPresence("online", "i download twitter videos make america great again")
+    bot.setPresence("online", "make america gay again")
     io.println(`Logged in as ${user.tag()}`)
 
     if previousUpdateMessage {
