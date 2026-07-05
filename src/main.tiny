@@ -1,13 +1,14 @@
 import "twitter.tiny" as Twitter;
 import std "io";
 import "gateway.tiny" as Discord;
+import "user.tiny" as DiscordUser;
+import "commands.tiny" as DiscordCommands;
 import std "fs";
 import std "runtime";
 import std "object";
 import lib "confh/TinyDotEnv" as TinyDotEnv;
 import std "process";
 import lib "confh/TinyColors" as TinyColors
-import std "observer";
 
 interface PreviousMessageState {
     channelID: string
@@ -24,16 +25,16 @@ const bot = Discord.Client({
     logging: true
 })
 
-bot.logger = fn(...info) {
-    io.println(TinyColors.cyan("[TinyBot] "),...info)
+bot.logger = fn(...info: any) {
+    io.println(TinyColors.cyan("[TinyBot] "), ...info)
 }
 
-const commandsData = {}
+const commandsData: object = {}
 const commandsInvokes = {}
 
 const path = "./src/commands"
 
-const commandsTasks =[]
+const commandsTasks = []
 
 for file in fs.readDir(path) {
     commandsTasks.push(spawn(file) fn(file) {
@@ -59,7 +60,7 @@ for file in fs.readDir(path) {
 
 await commandsTasks
 
-bot.onReady(fn(user) {
+bot.onReady(fn(user: DiscordUser.User) {
     bot.setPresence("online", "i download twitter videos make america great again")
     io.println(`Logged in as ${user.username}#${user.discriminator}`)
 
@@ -67,9 +68,9 @@ bot.onReady(fn(user) {
         bot.editMessage(previousUpdateMessage?.channelID, previousUpdateMessage?.messageID, "Update completed")
     }
 
-    const commands =[]
+    const commands = []
 
-    object.forEach(commandsData, fn(_, cmd) {
+    object.forEach(commandsData, fn(_: string, cmd: any) {
         commands.push(cmd)
     })
 
@@ -78,12 +79,12 @@ bot.onReady(fn(user) {
     io.println(`Registered ${commands.length()} slash commands`)
 })
 
-bot.onInteraction(fn(interaction, client) {
+bot.onInteraction(fn(interaction: DiscordCommands.Interaction, client: Discord.Client) {
     const name = interaction.getName()
 
     if commandsInvokes[name] {
         try {
-            commandsInvokes[name].call("run",[interaction, client])
+            commandsInvokes[name].call("run", [interaction, client])
         } catch e {
             io.println(TinyColors.red("[Command Error] " + e.message))
         }
@@ -91,15 +92,5 @@ bot.onInteraction(fn(interaction, client) {
         interaction.reply("command does not exist")
     }
 })
-
-if !previousUpdateMessage {
-    spawn() fn() {
-        observer.start({
-            host: "0.0.0.0",
-            port: 5555,
-            password: "nigger"
-        })
-    }
-}
 
 bot.start()

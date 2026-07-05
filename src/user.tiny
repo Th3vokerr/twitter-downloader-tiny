@@ -1,0 +1,28 @@
+export class User {
+    field id: string
+    field username: string = ""
+    field discriminator: string = ""
+    field globalName: string = ""
+    field avatar: string = ""
+    field bot: bool = false
+
+    fn init(data: object) {
+        this.id = data.id ?? ""
+        this.username = data.username ?? ""
+        this.discriminator = data.discriminator ?? ""
+        this.globalName = data.global_name ?? ""
+        this.avatar = data.avatar ?? ""
+        this.bot = data.bot == true
+    }
+
+    fn getAvatarUrl(size?: number) {
+        if this.avatar == "" {
+            return ""
+        }
+        let url = `https://cdn.discordapp.com/avatars/${this.id}/${this.avatar}.png`
+        if size {
+            url += `?size=${size}`
+        }
+        return url
+    }
+}

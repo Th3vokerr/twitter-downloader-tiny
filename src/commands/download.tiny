@@ -15,20 +15,20 @@ export fn info() {
 export fn run(interaction: Discord.Interaction, client: Discord.Client) {
     interaction.defer()
     const link: string = interaction.getStringOption("link")
-    if !(link.startsWith("https://x.com/") or link.startsWith("https://twitter.com/") or link.includes("/status/") or link.includes("/status")) {
+    if ! (link.startsWith("https://x.com/") or link.startsWith("https://twitter.com/") or link.includes("/status/") or link.includes("/status")) {
         interaction.followUp("Invalid link")
         return
     }
-    const links = Twitter.getTwitterVideos(link)
+    const links: array:Twitter.TwitterVideo = Twitter.getTwitterVideos(link)
 
     if !links.length() {
         interaction.followUp("not found")
         return
     }
 
-    const highestQuality = links[links.length() - 1]
+    const highestQuality: Twitter.TwitterVideo = links[links.length() - 1]
 
-    const actionRow =[]
+    const actionRow: array = []
     for link in links {
         const head = await http.request({
             method: "HEAD",
@@ -37,7 +37,7 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
 
         const length = head.headers["Content-Length"]
         const filesize = math.round(math.toInt(length) / 1_048_576)
-        actionRow.push(client.tempPrimaryButton(`${link.quality} (${filesize} MB)`, fn(i, _) {
+        actionRow.push(client.tempPrimaryButton(`${link.quality} (${filesize} MB)`, fn(i: Discord.Interaction, _: any) {
             if i.member.user.id != interaction.member.user.id {
                 return i.replyEphemeral("fuck off nigger")
             }
@@ -46,7 +46,7 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
         }))
     }
 
-    const container = Discord.container([
+    const container: object = Discord.container([
     Discord.textDisplay("## Download"),
     Discord.actionRow(actionRow)
     ])

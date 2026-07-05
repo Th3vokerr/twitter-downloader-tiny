@@ -2,14 +2,16 @@ import std "time";
 import "constants.tiny" as Constants
 import "commands.tiny" as CommandsModule
 import type "gateway.tiny" as Gateway
+import "user.tiny" as UserModule
+import "member.tiny" as MemberModule
 
 export class Message {
     field id = ""
     field channelId = ""
     field guildId = ""
     field content = ""
-    field author: object
-    field member = null
+    field author: UserModule.User = null
+    field member: MemberModule.Member = null
     field mentions = []
     field attachments = []
     field embeds = []
@@ -24,14 +26,18 @@ export class Message {
         this.channelId = data.channel_id
         this.guildId = data.guild_id
         this.content = data.content
-        this.author = data.author
-        this.member = data.member
+        if data.author != null {
+            this.author = UserModule.User(data.author)
+        }
+        if data.member != null {
+            this.member = MemberModule.Member(data.member)
+        }
         this.mentions = data.mentions
         this.attachments = data.attachments
         this.embeds = data.embeds
         this.timestamp = time.parseUnix(data.timestamp, time.TimeUnit.Milliseconds)
         if data.edited_timestamp {
-            this.editedTimestamp =  time.parseUnix(data.edited_timestamp, time.TimeUnit.Milliseconds)
+            this.editedTimestamp = time.parseUnix(data.edited_timestamp, time.TimeUnit.Milliseconds)
         }
         this.client = client
     }

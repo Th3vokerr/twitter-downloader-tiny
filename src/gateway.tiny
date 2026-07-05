@@ -5,21 +5,14 @@ import "constants.tiny" as Constants
 import "rest.tiny" as Rest
 import "message.tiny" as MessageModule
 import "commands.tiny" as CommandsModule
+import "user.tiny" as UserModule
+import "member.tiny" as MemberModule
 
 export interface BotConfig {
     token: string,
     intents?: number,
     logging?: bool,
     presence?: object
-}
-
-export interface User {
-    id: string,
-    username?: string,
-    discriminator?: string,
-    global_name?: string,
-    avatar?: string,
-    bot?: bool
 }
 
 export interface Guild {
@@ -53,22 +46,8 @@ export interface Role {
     mentionable?: bool
 }
 
-export interface Member {
-    user?: User,
-    nick?: string,
-    avatar?: string,
-    roles?: array,
-    joined_at?: string,
-    premium_since?: string,
-    deaf?: bool,
-    mute?: bool,
-    pending?: bool,
-    permissions?: string,
-    communication_disabled_until?: string
-}
-
 export interface Presence {
-    user: User,
+    user: UserModule.User,
     guild_id?: string,
     status?: string,
     activities?: array,
@@ -79,7 +58,7 @@ export interface VoiceState {
     guild_id?: string,
     channel_id?: string,
     user_id: string,
-    member?: Member,
+    member?: MemberModule.Member,
     session_id?: string,
     deaf?: bool,
     mute?: bool,
@@ -120,19 +99,19 @@ export const ButtonStyle = Constants.ButtonStyle
 export const MessageFlag = Constants.MessageFlag
 
 export fn newEmbed() { return CommandsModule.newEmbed() }
-export fn embedPayload(card: CommandsModule.EmbedBuilder | object): object { 
+export fn embedPayload(card: CommandsModule.EmbedBuilder | object): object {
     return CommandsModule.embedPayload(card)
- }
+}
 export fn embedsPayload(embeds: array): object { return CommandsModule.embedsPayload(embeds) }
 export fn componentsV2Payload(components: array): object {
     return CommandsModule.componentsV2Payload(components)
- }
+}
 export fn contentComponentsPayload(content: string, components: array): object { return CommandsModule.contentComponentsPayload(content, components) }
 export fn actionRow(components: array): CommandsModule.ActionRowComponent { return CommandsModule.actionRow(components) }
 export fn button(style: ButtonStyle, label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.button(style, label, customId) }
-export fn primaryButton(label: string, customId: string): CommandsModule.ButtonComponent { 
+export fn primaryButton(label: string, customId: string): CommandsModule.ButtonComponent {
     return CommandsModule.primaryButton(label, customId)
- }
+}
 export fn secondaryButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.secondaryButton(label, customId) }
 export fn successButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.successButton(label, customId) }
 export fn dangerButton(label: string, customId: string): CommandsModule.ButtonComponent { return CommandsModule.dangerButton(label, customId) }
@@ -161,7 +140,7 @@ export class Client {
     field conn = null
     field sessionId = ""
     field sequence = null
-    field user = null
+    field user: UserModule.User = null
     field latency = 0
     field heartbeatSentTime = 0
     field presence = null
@@ -192,36 +171,36 @@ export class Client {
     fn init(config: BotConfig) {
         this.token = config.token
         this.logger = fn(...info: any) {
-            io.println(`[TinyBot]`,...info)
+            io.println(`[TinyBot]`, ...info)
         }
-        if config.intents {this.intents = config.intents }
-        if config.logging {this.logging = config.logging }
-        if config.presence {this.presence = config.presence }
+        if config.intents { this.intents = config.intents }
+        if config.logging { this.logging = config.logging }
+        if config.presence { this.presence = config.presence }
     }
 
-    fn onRaw(handler: function) {this.rawCallback = handler }
-    fn onReady(handler: function(User)) {this.readyCallback = handler }
-    fn onResume(handler: function) {this.resumeCallback = handler }
-    fn onGuildCreate(handler: function) {this.guildCreateCallback = handler }
-    fn onMessage(handler: function(MessageModule.Message, Client)) {this.messageCallback = handler }
-    fn onMessageUpdate(handler: function) {this.messageUpdateCallback = handler }
-    fn onMessageDelete(handler: function) {this.messageDeleteCallback = handler }
-    fn onInteraction(handler: function(CommandsModule.Interaction, Client)) {this.interactionCallback = handler }
-    fn onError(handler: function) {this.errorCallback = handler }
+    fn onRaw(handler: function) { this.rawCallback = handler }
+    fn onReady(handler: function(UserModule.User)) { this.readyCallback = handler }
+    fn onResume(handler: function) { this.resumeCallback = handler }
+    fn onGuildCreate(handler: function) { this.guildCreateCallback = handler }
+    fn onMessage(handler: function(MessageModule.Message, Client)) { this.messageCallback = handler }
+    fn onMessageUpdate(handler: function) { this.messageUpdateCallback = handler }
+    fn onMessageDelete(handler: function) { this.messageDeleteCallback = handler }
+    fn onInteraction(handler: function(CommandsModule.Interaction, Client)) { this.interactionCallback = handler }
+    fn onError(handler: function) { this.errorCallback = handler }
 
     fn log(info: string) {
-        if this.logging {this.logger(info) }
+        if this.logging { this.logger(info) }
     }
 
     fn request(method: string, route: string, body: any): any {
         return Rest.request(this.token, method, route, body)
     }
 
-    fn get(route: string): any {return Rest.get(this.token, route) }
-    fn post(route: string, body: any): any {return Rest.post(this.token, route, body) }
-    fn patch(route: string, body: any): any {return Rest.patch(this.token, route, body) }
-    fn put(route: string, body: any): any {return Rest.put(this.token, route, body) }
-    fn delete(route: string): any {return Rest.delete(this.token, route) }
+    fn get(route: string): any { return Rest.get(this.token, route) }
+    fn post(route: string, body: any): any { return Rest.post(this.token, route, body) }
+    fn patch(route: string, body: any): any { return Rest.patch(this.token, route, body) }
+    fn put(route: string, body: any): any { return Rest.put(this.token, route, body) }
+    fn delete(route: string): any { return Rest.delete(this.token, route) }
 
     fn sendMessage(channelId: string, textContent: string): any {
         return Rest.sendMessage(this.token, channelId, MessageModule.contentPayload(textContent))
@@ -241,13 +220,13 @@ export class Client {
 
     fn sendFile(channelId: string, file: FilePayload, content?: string): any {
         const payload = { "files": [file] }
-        if content != null and content != "" {payload.content = content }
+        if content != null and content != "" { payload.content = content }
         return this.sendMessagePayload(channelId, payload)
     }
 
     fn sendFiles(channelId: string, files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.sendMessagePayload(channelId, body)
     }
@@ -263,7 +242,7 @@ export class Client {
     fn nextComponentId(prefix?: string): string {
         this.componentCounter = this.componentCounter + 1
         let base = "tmp"
-        if prefix != null and prefix != "" {base = prefix }
+        if prefix != null and prefix != "" { base = prefix }
         return `${base}:${time.nowMs()}:${this.componentCounter}`
     }
 
@@ -278,7 +257,7 @@ export class Client {
 
     fn onceComponent(customId: string, handler: function(CommandsModule.Interaction, Client), ttlMs?: number): string {
         let expiresAt = 0
-        if ttlMs != null and ttlMs > 0 {expiresAt = time.nowMs() + ttlMs }
+        if ttlMs != null and ttlMs > 0 { expiresAt = time.nowMs() + ttlMs }
         this.componentCallbacks[customId] = {
             "handler": handler,
             "once": true,
@@ -323,26 +302,26 @@ export class Client {
     }
 
     fn replyPayload(channelId: string, messageId: string, payload: object): any {
-        payload.message_reference = {"message_id": messageId }
+        payload.message_reference = { "message_id": messageId }
         return Rest.sendMessage(this.token, channelId, payload)
     }
 
     fn replyFile(channelId: string, messageId: string, file: FilePayload, content?: string): any {
         const payload = { "files": [file] }
-        if content != null and content != "" {payload.content = content }
+        if content != null and content != "" { payload.content = content }
         return this.replyPayload(channelId, messageId, payload)
     }
 
     fn replyFiles(channelId: string, messageId: string, files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.replyPayload(channelId, messageId, body)
     }
 
     fn replyComponents(channelId: string, messageId: string, components: array): any {
         const payload = CommandsModule.componentsV2Payload(components)
-        payload.message_reference = {"message_id": messageId }
+        payload.message_reference = { "message_id": messageId }
         return Rest.sendMessage(this.token, channelId, payload)
     }
 
@@ -360,7 +339,7 @@ export class Client {
 
     fn editMessageFiles(channelId: string, messageId: string, files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.editMessagePayload(channelId, messageId, body)
     }
@@ -405,17 +384,19 @@ export class Client {
         return Rest.unpinMessage(this.token, channelId, messageId)
     }
 
-    fn getCurrentUser(): User {
+    fn getCurrentUser(): UserModule.User {
         const data = this.get("/users/@me")
-        this.user = data
-        this.cacheUser(data)
-        return data
+        const user = UserModule.User(data)
+        this.user = user
+        this.cacheUser(user)
+        return user
     }
 
-    fn getUser(userId: string): User {
+    fn getUser(userId: string): UserModule.User {
         const data = this.get(`/users/${userId}`)
-        this.cacheUser(data)
-        return data
+        const user = UserModule.User(data)
+        this.cacheUser(user)
+        return user
     }
 
     fn getGuild(guildId: string): Guild {
@@ -432,71 +413,77 @@ export class Client {
 
     fn getGuildChannels(guildId: string): array {
         const data = this.get(`/guilds/${guildId}/channels`)
-        for channel in data {this.cacheChannel(channel) }
+        for channel in data { this.cacheChannel(channel) }
         return data
     }
 
-    fn getGuildMember(guildId: string, userId: string): Member {
+    fn getGuildMember(guildId: string, userId: string): MemberModule.Member {
         const data = this.get(`/guilds/${guildId}/members/${userId}`)
-        this.cacheMember(guildId, data)
-        return data
+        const member = MemberModule.Member(data)
+        this.cacheMember(guildId, member)
+        return member
     }
 
     fn getGuildRoles(guildId: string): array {
         const data = this.get(`/guilds/${guildId}/roles`)
-        for role in data {this.cacheRole(guildId, role) }
+        for role in data { this.cacheRole(guildId, role) }
         return data
     }
 
-    fn cachedUser(userId: string): User | null {return this.users[userId] ?? null }
-    fn cachedGuild(guildId: string): Guild | null {return this.guilds[guildId] ?? null }
-    fn cachedChannel(channelId: string): Channel | null {return this.channels[channelId] ?? null }
+    fn cachedUser(userId: string): UserModule.User | null { return this.users[userId] ?? null }
+    fn cachedGuild(guildId: string): Guild | null { return this.guilds[guildId] ?? null }
+    fn cachedChannel(channelId: string): Channel | null { return this.channels[channelId] ?? null }
     fn cachedRole(guildId: string, roleId: string): Role | null {
         const guildRoles = this.roles[guildId]
-        if !guildRoles {return null }
+        if !guildRoles { return null }
         return guildRoles[roleId] ?? null
     }
-    fn cachedMember(guildId: string, userId: string): Member | null {
+    fn cachedMember(guildId: string, userId: string): MemberModule.Member | null {
         const guildMembers = this.members[guildId]
-        if !guildMembers {return null }
+        if !guildMembers { return null }
         return guildMembers[userId] ?? null
     }
     fn cachedPresence(guildId: string, userId: string): Presence | null {
         const guildPresences = this.presences[guildId]
-        if !guildPresences {return null }
+        if !guildPresences { return null }
         return guildPresences[userId] ?? null
     }
     fn cachedVoiceState(guildId: string, userId: string): VoiceState | null {
         const guildVoiceStates = this.voiceStates[guildId]
-        if !guildVoiceStates {return null }
+        if !guildVoiceStates { return null }
         return guildVoiceStates[userId] ?? null
     }
 
-    fn cacheUser(user: User) {
-        if user and user.id {this.users[user.id] = user }
+    fn cacheUser(user: any) {
+        if !user { return null }
+        let userInst = user
+        if typeof(user) == "object" and !(user instanceof UserModule.User) {
+            userInst = UserModule.User(user)
+        }
+        if userInst.id { this.users[userInst.id] = userInst }
     }
 
     fn cacheGuild(guild: Guild) {
-        if !guild or !guild.id {return null }
+        if !guild or !guild.id { return null }
         this.guilds[guild.id] = guild
 
         if guild.channels {
-            for channel in guild.channels {this.cacheChannel(channel) }
+            for channel in guild.channels { this.cacheChannel(channel) }
         }
         if guild.threads {
-            for channel in guild.threads {this.cacheChannel(channel) }
+            for channel in guild.threads { this.cacheChannel(channel) }
         }
         if guild.roles {
-            for role in guild.roles {this.cacheRole(guild.id, role) }
+            for role in guild.roles { this.cacheRole(guild.id, role) }
         }
         if guild.members {
-            for member in guild.members {this.cacheMember(guild.id, member) }
+            for member in guild.members { this.cacheMember(guild.id, member) }
         }
         if guild.presences {
-            for presence in guild.presences {this.cachePresence(guild.id, presence) }
+            for presence in guild.presences { this.cachePresence(guild.id, presence) }
         }
         if guild.voice_states {
-            for state in guild.voice_states {this.cacheVoiceState(guild.id, state) }
+            for state in guild.voice_states { this.cacheVoiceState(guild.id, state) }
         }
     }
 
@@ -509,7 +496,7 @@ export class Client {
     }
 
     fn cacheChannel(channel: Channel) {
-        if channel and channel.id {this.channels[channel.id] = channel }
+        if channel and channel.id { this.channels[channel.id] = channel }
     }
 
     fn removeChannel(channelId: string) {
@@ -517,59 +504,63 @@ export class Client {
     }
 
     fn cacheRole(guildId: string, role: Role) {
-        if !guildId or !role or !role.id {return null }
-        if !this.roles[guildId] {this.roles[guildId] = {} }
+        if !guildId or !role or !role.id { return null }
+        if !this.roles[guildId] { this.roles[guildId] = {} }
         this.roles[guildId][role.id] = role
     }
 
     fn removeRole(guildId: string, roleId: string) {
-        if this.roles[guildId] {this.roles[guildId][roleId] = null }
+        if this.roles[guildId] { this.roles[guildId][roleId] = null }
     }
 
-    fn cacheMember(guildId: string, member: Member) {
-        if !guildId or !member {return null }
-        if member.user {this.cacheUser(member.user) }
+    fn cacheMember(guildId: string, member: any) {
+        if !guildId or !member { return null }
+        let memberInst = member
+        if typeof(member) == "object" and !(member instanceof MemberModule.Member) {
+            memberInst = MemberModule.Member(member)
+        }
+        if memberInst.user { this.cacheUser(memberInst.user) }
         let userId = ""
-        if member.user and member.user.id {userId = member.user.id }
-        if userId == "" and member.user_id {userId = member.user_id }
-        if userId == "" {return null }
-        if !this.members[guildId] {this.members[guildId] = {} }
-        this.members[guildId][userId] = member
+        if memberInst.user and memberInst.user.id { userId = memberInst.user.id }
+        if userId == "" { return null }
+        if !this.members[guildId] { this.members[guildId] = {} }
+        this.members[guildId][userId] = memberInst
     }
 
     fn removeMember(guildId: string, userId: string) {
-        if this.members[guildId] {this.members[guildId][userId] = null }
+        if this.members[guildId] { this.members[guildId][userId] = null }
     }
 
     fn cachePresence(guildId: string, presence: Presence) {
-        if !guildId or !presence or !presence.user or !presence.user.id {return null }
+        if !guildId or !presence or !presence.user or !presence.user.id { return null }
         this.cacheUser(presence.user)
-        if !this.presences[guildId] {this.presences[guildId] = {} }
+        if !this.presences[guildId] { this.presences[guildId] = {} }
         this.presences[guildId][presence.user.id] = presence
     }
 
     fn cacheVoiceState(guildId: string, state: VoiceState) {
-        if !guildId or !state or !state.user_id {return null }
-        if !this.voiceStates[guildId] {this.voiceStates[guildId] = {} }
+        if !guildId or !state or !state.user_id { return null }
+        if !this.voiceStates[guildId] { this.voiceStates[guildId] = {} }
         this.voiceStates[guildId][state.user_id] = state
     }
 
     fn removeVoiceState(guildId: string, userId: string) {
-        if this.voiceStates[guildId] {this.voiceStates[guildId][userId] = null }
+        if this.voiceStates[guildId] { this.voiceStates[guildId][userId] = null }
     }
 
     fn cacheReady(data: any) {
         if data.user {
-            this.user = data.user
-            this.cacheUser(data.user)
+            const userInst = UserModule.User(data.user)
+            this.user = userInst
+            this.cacheUser(userInst)
         }
         if data.guilds {
-            for guild in data.guilds {this.cacheGuild(guild) }
+            for guild in data.guilds { this.cacheGuild(guild) }
         }
     }
 
     fn createDm(userId: string) {
-        return this.post("/users/@me/channels", {"recipient_id": userId })
+        return this.post("/users/@me/channels", { "recipient_id": userId })
     }
 
     fn sendDm(userId: string, textContent: string) {
@@ -592,17 +583,17 @@ export class Client {
             "op": Constants.GatewayOpcode.PresenceUpdate,
             "d": {
                 "since": null,
-                "activities":[{"name": activityName, "type": 0 }],
+                "activities": [{ "name": activityName, "type": 0 }],
                 "status": status,
                 "afk": false
             }
         }
         this.presence = payload.d
-        if this.conn {this.conn.sendJson(payload) }
+        if this.conn { this.conn.sendJson(payload) }
     }
 
     fn getApplicationId(): string {
-        if this.user {return this.user.id }
+        if this.user { return this.user.id }
         return ""
     }
 
@@ -639,7 +630,6 @@ export class Client {
     fn start() {
         while this.running {
             this.connectGateway()
-            this.log("Reconnecting to Discord Gateway...")
             time.sleep(1000)
         }
     }
@@ -649,14 +639,19 @@ export class Client {
     }
 
     fn connectGateway() {
-        this.log("Initializing WebSocket Gateway connection...")
-        this.conn = websocket.connect(Constants.GATEWAY_URL)
+        try {
+            this.conn = websocket.connect(Constants.GATEWAY_URL)
+        } catch err {
+            this.closeGateway()
+            io.println(err)
+            return null
+        }
 
         let hello = null
         try {
             hello = this.conn.readJson()
         } catch err {
-            this.log(`Gateway hello failed: ${err}`)
+            io.println(err)
             this.closeGateway()
             return null
         }
@@ -666,9 +661,14 @@ export class Client {
         const botInstance = this
 
         spawn() fn() {
-            while this.running {
+            while this.running and liveConn.isOpen() {
                 botInstance.heartbeatSentTime = time.nowMs()
-                liveConn.sendJson({"op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
+                try {
+                    liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
+                } catch err {
+                    io.println(err)
+                    break
+                }
                 time.sleep(interval)
             }
         }
@@ -678,18 +678,25 @@ export class Client {
             "d": {
                 "token": this.token,
                 "intents": this.intents,
-                "properties": {"os": "linux", "browser": "tiny", "device": "tiny" }
+                "properties": { "os": "linux", "browser": "tiny", "device": "tiny" }
             }
         }
-        if this.presence {identify.d.presence = this.presence }
-        this.conn.sendJson(identify)
+        if this.presence { identify.d.presence = this.presence }
 
-        while this.running {
+        try {
+            this.conn.sendJson(identify)
+        } catch err {
+            io.println(err)
+            this.closeGateway()
+            return null
+        }
+
+        while this.running and this.conn.isOpen() {
             let payload: any = null
             try {
                 payload = this.conn.readJson()
             } catch err {
-                this.log(`Gateway read failed; reconnecting: ${err}`)
+                io.println(err)
                 this.closeGateway()
                 return null
             }
@@ -707,39 +714,40 @@ export class Client {
             try {
                 this.conn.close(1000, "reconnect")
             } catch err {
+                io.println(err)
                 null
             }
         }
     }
 
     fn dispatchTempComponent(interaction: CommandsModule.Interaction): bool {
-        if !interaction.isComponent() {return false }
+        if !interaction.isComponent() { return false }
 
         const customId = interaction.getCustomId()
-        if customId == "" {return false }
+        if customId == "" { return false }
 
         const entry = this.componentCallbacks[customId]
-        if !entry {return false }
+        if !entry { return false }
 
         if entry.expiresAt and entry.expiresAt > 0 and time.nowMs() > entry.expiresAt {
             this.componentCallbacks[customId] = null
             return false
         }
 
-        if entry.once {this.componentCallbacks[customId] = null }
+        if entry.once { this.componentCallbacks[customId] = null }
 
         const fireComponent: function = entry.handler
         const client = this
-        spawn() fn() {fireComponent(interaction, client) }
+        spawn() fn() { fireComponent(interaction, client) }
         return true
     }
 
     fn handlePayload(payload: object): bool {
-        if payload.s {this.sequence = payload.s }
+        if payload.s { this.sequence = payload.s }
 
         if this.rawCallback {
             const fireRaw: function = this.rawCallback
-            spawn() fn() {fireRaw(payload) }
+            spawn() fn() { fireRaw(payload) }
         }
 
         if payload.op == Constants.GatewayOpcode.HeartbeatAck {
@@ -748,78 +756,77 @@ export class Client {
         }
 
         if payload.op == Constants.GatewayOpcode.Reconnect {
-            this.log("Gateway requested reconnect")
             return false
         }
 
-        if payload.op != Constants.GatewayOpcode.Dispatch {return true }
+        if payload.op != Constants.GatewayOpcode.Dispatch { return true }
 
-        if payload.t == "READY" {
+        if payload.t == Constants.GatewayEvents.Ready {
             this.sessionId = payload.d.session_id
             this.cacheReady(payload.d)
             if this.readyCallback {
                 const fireReady: function = this.readyCallback
                 const userData = payload.d.user
-                spawn() fn() {fireReady(userData) }
+                spawn() fn() { fireReady(userData) }
             }
         }
 
-        if payload.t == "RESUMED" {
+        if payload.t == Constants.GatewayEvents.Resumed {
             if this.resumeCallback {
                 const fireResume: function = this.resumeCallback
-                spawn() fn() {fireResume(payload.d) }
+                spawn() fn() { fireResume(payload.d) }
             }
         }
 
-        if payload.t == "GUILD_CREATE" {
+        if payload.t == Constants.GatewayEvents.GuildCreate {
             this.cacheGuild(payload.d)
             if this.guildCreateCallback {
                 const fireGuildCreate: function = this.guildCreateCallback
                 const guild = payload.d
-                spawn() fn() {fireGuildCreate(guild) }
+                spawn() fn() { fireGuildCreate(guild) }
             }
         }
 
-        if payload.t == "GUILD_UPDATE" {
+        if payload.t == Constants.GatewayEvents.GuildUpdate {
             this.cacheGuild(payload.d)
         }
 
-        if payload.t == "GUILD_DELETE" {
-            if payload.d.id {this.removeGuild(payload.d.id) }
+        if payload.t == Constants.GatewayEvents.GuildDelete {
+            if payload.d.id { this.removeGuild(payload.d.id) }
         }
 
-        if payload.t == "CHANNEL_CREATE" or payload.t == "CHANNEL_UPDATE" or payload.t == "THREAD_CREATE" or payload.t == "THREAD_UPDATE" {
+        if payload.t == Constants.GatewayEvents.ChannelCreate or payload.t == Constants.GatewayEvents.ChannelUpdate or payload.t == Constants.GatewayEvents.ThreadCreate or payload.t == Constants.GatewayEvents.ThreadUpdate {
             this.cacheChannel(payload.d)
         }
 
-        if payload.t == "CHANNEL_DELETE" or payload.t == "THREAD_DELETE" {
-            if payload.d.id {this.removeChannel(payload.d.id) }
+        if payload.t == Constants.GatewayEvents.ChannelDelete or payload.t == Constants.GatewayEvents.ThreadDelete {
+            if payload.d.id { this.removeChannel(payload.d.id) }
         }
 
-        if payload.t == "GUILD_ROLE_CREATE" or payload.t == "GUILD_ROLE_UPDATE" {
-            if payload.d.guild_id and payload.d.role {this.cacheRole(payload.d.guild_id, payload.d.role) }
+        if payload.t == Constants.GatewayEvents.GuildRoleCreate or payload.t == Constants.GatewayEvents.GuildRoleUpdate {
+            if payload.d.guild_id and payload.d.role { this.cacheRole(payload.d.guild_id, payload.d.role) }
         }
 
-        if payload.t == "GUILD_ROLE_DELETE" {
-            if payload.d.guild_id and payload.d.role_id {this.removeRole(payload.d.guild_id, payload.d.role_id) }
+        if payload.t == Constants.GatewayEvents.GuildRoleDelete {
+            if payload.d.guild_id and payload.d.role_id { this.removeRole(payload.d.guild_id, payload.d.role_id) }
         }
 
-        if payload.t == "GUILD_MEMBER_ADD" or payload.t == "GUILD_MEMBER_UPDATE" {
-            if payload.d.guild_id {this.cacheMember(payload.d.guild_id, payload.d) }
+        if payload.t == Constants.GatewayEvents.GuildMemberAdd or payload.t == Constants.GatewayEvents.GuildMemberUpdate {
+            if payload.d.guild_id { this.cacheMember(payload.d.guild_id, payload.d) }
         }
 
-        if payload.t == "GUILD_MEMBER_REMOVE" {
+        if payload.t == Constants.GatewayEvents.GuildMemberRemove {
             if payload.d.guild_id and payload.d.user and payload.d.user.id {
                 this.cacheUser(payload.d.user)
                 this.removeMember(payload.d.guild_id, payload.d.user.id)
             }
         }
 
-        if payload.t == "PRESENCE_UPDATE" {
-            if payload.d.guild_id {this.cachePresence(payload.d.guild_id, payload.d) }
+        if payload.t == Constants.GatewayEvents.PresenceUpdate {
+            if payload.d.guild_id { this.cachePresence(payload.d.guild_id, payload.d) }
         }
 
-        if payload.t == "VOICE_STATE_UPDATE" {
+        if payload.t == Constants.GatewayEvents.VoiceStateUpdate {
             if payload.d.guild_id and payload.d.user_id {
                 if payload.d.channel_id {
                     this.cacheVoiceState(payload.d.guild_id, payload.d)
@@ -829,13 +836,14 @@ export class Client {
             }
         }
 
-        if payload.t == "USER_UPDATE" {
-            this.user = payload.d
-            this.cacheUser(payload.d)
+        if payload.t == Constants.GatewayEvents.UserUpdate {
+            const userInst = UserModule.User(payload.d)
+            this.user = userInst
+            this.cacheUser(userInst)
         }
 
-        if payload.t == "MESSAGE_CREATE" {
-            if payload.d.author {this.cacheUser(payload.d.author) }
+        if payload.t == Constants.GatewayEvents.MessageCreate {
+            if payload.d.author { this.cacheUser(payload.d.author) }
             if payload.d.guild_id and payload.d.member {
                 payload.d.member.user = payload.d.author
                 this.cacheMember(payload.d.guild_id, payload.d.member)
@@ -843,12 +851,12 @@ export class Client {
             if this.messageCallback {
                 const fireMessage: function = this.messageCallback
                 const msgInstance = MessageModule.Message(payload.d, this)
-                spawn() fn() {fireMessage(msgInstance, this) }
+                spawn() fn() { fireMessage(msgInstance, this) }
             }
         }
 
-        if payload.t == "MESSAGE_UPDATE" {
-            if payload.d.author {this.cacheUser(payload.d.author) }
+        if payload.t == Constants.GatewayEvents.MessageUpdate {
+            if payload.d.author { this.cacheUser(payload.d.author) }
             if payload.d.guild_id and payload.d.member {
                 payload.d.member.user = payload.d.author
                 this.cacheMember(payload.d.guild_id, payload.d.member)
@@ -856,21 +864,21 @@ export class Client {
             if this.messageUpdateCallback {
                 const fireMessageUpdate: function = this.messageUpdateCallback
                 const msgInstance = MessageModule.Message(payload.d, this)
-                spawn() fn() {fireMessageUpdate(msgInstance) }
+                spawn() fn() { fireMessageUpdate(msgInstance) }
             }
         }
 
-        if payload.t == "MESSAGE_DELETE" {
+        if payload.t == Constants.GatewayEvents.MessageDelete {
             if this.messageDeleteCallback {
                 const fireMessageDelete: function = this.messageDeleteCallback
                 const data = payload.d
-                spawn() fn() {fireMessageDelete(data) }
+                spawn() fn() { fireMessageDelete(data) }
             }
         }
 
-        if payload.t == "INTERACTION_CREATE" {
-            if payload.d.user {this.cacheUser(payload.d.user) }
-            if payload.d.member and payload.d.guild_id {this.cacheMember(payload.d.guild_id, payload.d.member) }
+        if payload.t == Constants.GatewayEvents.InteractionCreate {
+            if payload.d.user { this.cacheUser(payload.d.user) }
+            if payload.d.member and payload.d.guild_id { this.cacheMember(payload.d.guild_id, payload.d.member) }
             const interactionInstance = CommandsModule.Interaction(payload.d, this)
             if this.dispatchTempComponent(interactionInstance) {
                 return true
@@ -878,7 +886,7 @@ export class Client {
 
             if this.interactionCallback {
                 const fireInteraction: function = this.interactionCallback
-                spawn() fn() {fireInteraction(interactionInstance, this) }
+                spawn() fn() { fireInteraction(interactionInstance, this) }
             }
         }
 

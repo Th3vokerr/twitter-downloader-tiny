@@ -110,21 +110,39 @@ fn videoQualityFromUrl(videoUrl: string): string {
     return ""
 }
 
+export class TwitterVideo {
+    field type: string
+    field quality: string
+    field bitrate: number
+    field url: string
+    field cover: string
+    field duration: number
+
+    fn init(type: string, quality: string, bitrate: number, url: string, cover: string, duration: number) {
+        this.type = type
+        this.quality = quality
+        this.bitrate = bitrate
+        this.url = url
+        this.cover = cover
+        this.duration = duration
+    }
+}
+
 export fn getTwitterVideos(tweetUrl: string): array {
     const ct0 = process.getEnv("CT0")
     const authToken = process.getEnv("AUTH_TOKEN")
     const tweetId = tweetIdFromUrl(tweetUrl)
     if tweetId == "" {
-        return[]
+        return []
     }
     const guestBearer = getPastebinText(GUEST_LINK)
     const twitterBearer = getPastebinText(TWITTER_LINK)
     if guestBearer == "" or twitterBearer == "" {
-        return[]
+        return []
     }
     const guestToken = getGuestToken(guestBearer)
     if guestToken == "" {
-        return[]
+        return []
     }
     const variables = {
         tweetId: tweetId,
@@ -173,18 +191,18 @@ export fn getTwitterVideos(tweetUrl: string): array {
     })
 
     if res.status < 200 or res.status >= 300 {
-        return[]
+        return []
     }
     const data = json.parse(res.body)
     let tweet = data.data.tweetResult.result
     if tweet.__typename == "TweetWithVisibilityResults" {
         tweet = tweet.tweet
     }
-    let mediaList = tweet.legacy.entities.media ??[]
+    let mediaList = tweet.legacy.entities.media ?? []
     if typeof(mediaList) != "array" {
-        mediaList =[]
+        mediaList = []
     }
-    const videos: array:any =[]
+    const videos: array:TwitterVideo = []
 
     for let i = 0; i < mediaList.length(); i++ {
         const media = mediaList[i]
@@ -201,7 +219,7 @@ export fn getTwitterVideos(tweetUrl: string): array {
             continue
         }
 
-        const variants = media.video_info.variants ??[]
+        const variants = media.video_info.variants ?? []
         if typeof(variants) != "array" {
             continue
         }
@@ -217,14 +235,14 @@ export fn getTwitterVideos(tweetUrl: string): array {
                     bitrate = variant.bitrate
                 }
                 const duration = media.video_info.duration_millis ?? 0
-                const video = {
-                    type: media.type,
-                    quality: videoQualityFromUrl(variant.url),
-                    bitrate: bitrate,
-                    url: variant.url,
-                    cover: media.media_url_https,
-                    duration: duration
-                }
+                const video = TwitterVideo(
+                    media.type,
+                    videoQualityFromUrl(variant.url),
+                    bitrate,
+                    variant.url,
+                    media.media_url_https,
+                    duration
+                )
                 videos.push(video)
             }
         }

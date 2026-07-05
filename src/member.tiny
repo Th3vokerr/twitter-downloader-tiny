@@ -1,0 +1,29 @@
+import "user.tiny" as UserModule
+
+export class Member {
+    field user: UserModule.User
+    field nick: string = ""
+    field avatar: string = ""
+    field roles: array:string = []
+    field joinedAt: string = ""
+    field premiumSince: string = ""
+    field deaf: bool = false
+    field mute: bool = false
+    field pending: bool = false
+    field permissions: string = ""
+
+    fn init(data: object) {
+        if data.user != null {
+            this.user = UserModule.User(data.user)
+        }
+        this.nick = data.nick ?? ""
+        this.avatar = data.avatar ?? ""
+        this.roles = data.roles ?? []
+        this.joinedAt = data.joined_at ?? ""
+        this.premiumSince = data.premium_since ?? ""
+        this.deaf = data.deaf == true
+        this.mute = data.mute == true
+        this.pending = data.pending == true
+        this.permissions = data.permissions ?? ""
+    }
+}

@@ -16,26 +16,26 @@ export fn jsonHeaders(token: string): object {
 }
 
 export fn hasFiles(payload: any): bool {
-    if payload == null or typeof(payload) != "object" {return false }
-    if payload.files != null {return true }
+    if payload == null or typeof(payload) != "object" { return false }
+    if payload.files != null { return true }
     return payload.data != null and typeof(payload.data) == "object" and payload.data.files != null
 }
 
 export fn filesFromPayload(payload: object): any {
-    if payload.files != null {return payload.files }
-    if payload.data != null and typeof(payload.data) == "object" and payload.data.files != null {return payload.data.files }
+    if payload.files != null { return payload.files }
+    if payload.data != null and typeof(payload.data) == "object" and payload.data.files != null { return payload.data.files }
     return []
 }
 
 export fn normalizedFiles(files: any): array {
-    if files == null {return [] }
-    if typeof(files) == "array" {return files }
+    if files == null { return [] }
+    if typeof(files) == "array" { return files }
 
     const out = []
     for key in object.keys(files) {
         let item = files[key]
         if item != null and typeof(item) == "object" {
-            if item.field == null {item.field = key }
+            if item.field == null { item.field = key }
             out.push(item)
         }
     }
@@ -43,7 +43,7 @@ export fn normalizedFiles(files: any): array {
 }
 
 export fn filenameForFile(file: object, index: number): string {
-    if file.filename != null and file.filename != "" {return file.filename }
+    if file.filename != null and file.filename != "" { return file.filename }
     return `file-${index}`
 }
 
@@ -52,8 +52,8 @@ export fn discordFiles(files: any): array {
     const out = []
     for file in normalized {
         const index = out.length()
-        if file.field == null or file.field == "" {file.field = `files[${index}]` }
-        if file.filename == null or file.filename == "" {file.filename = filenameForFile(file, index) }
+        if file.field == null or file.field == "" { file.field = `files[${index}]` }
+        if file.filename == null or file.filename == "" { file.filename = filenameForFile(file, index) }
         out.push(file)
     }
     return out

@@ -13,13 +13,13 @@ export fn info() {
 
 export fn run(interaction: Discord.Interaction, client: Discord.Client) {
     interaction.defer()
-    const url = interaction.getStringOption("url")
-    const data = Yt.getYoutubeVideos(url)
+    const url: string = interaction.getStringOption("url")
+    const data: array:Yt.YoutubeVideo = Yt.getYoutubeVideos(url)
 
     if !data.length() {
         return interaction.followUp("video not found")
     }
 
-    const file = Discord.fileFromBytes("yt.mp4", fs.readBytes(data[0].file))
+    const file: Commands.FilePayload = Discord.fileFromBytes("yt.mp4", fs.readBytes(data[0].file))
     interaction.followUpFile(file)
 }

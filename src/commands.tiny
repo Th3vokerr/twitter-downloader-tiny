@@ -1,5 +1,7 @@
 import "constants.tiny" as Constants
 import "rest.tiny" as Rest
+import "user.tiny" as UserModule
+import "member.tiny" as MemberModule
 
 export interface InteractionPayload {
     id: string,
@@ -47,16 +49,16 @@ export fn fileFromBytes(filename: string, bytes: buffer, contentType?: string, f
         "filename": filename,
         "bytes": bytes
     }
-    if contentType != null and contentType != "" {file.contentType = contentType }
-    if field != null and field != "" {file.field = field }
+    if contentType != null and contentType != "" { file.contentType = contentType }
+    if field != null and field != "" { file.field = field }
     return file
 }
 
 export fn fileFromPath(path: string, filename?: string, contentType?: string, field?: string): FilePayload {
     const file = { "path": path }
-    if filename != null and filename != "" {file.filename = filename }
-    if contentType != null and contentType != "" {file.contentType = contentType }
-    if field != null and field != "" {file.field = field }
+    if filename != null and filename != "" { file.filename = filename }
+    if contentType != null and contentType != "" { file.contentType = contentType }
+    if field != null and field != "" { file.field = field }
     return file
 }
 
@@ -65,8 +67,8 @@ export fn fileFromText(filename: string, text: string, contentType?: string, fie
         "filename": filename,
         "text": text
     }
-    if contentType != null and contentType != "" {file.contentType = contentType }
-    if field != null and field != "" {file.field = field }
+    if contentType != null and contentType != "" { file.contentType = contentType }
+    if field != null and field != "" { file.field = field }
     return file
 }
 
@@ -103,8 +105,8 @@ export class Interaction {
     field data = null
     field guildId = ""
     field channelId = ""
-    field member = null
-    field user = null
+    field member: MemberModule.Member = null
+    field user: UserModule.User = null
     field message = null
     field raw = null
     field client = null
@@ -120,8 +122,12 @@ export class Interaction {
         this.data = data.data
         this.guildId = data.guild_id
         this.channelId = data.channel_id
-        this.member = data.member
-        this.user = data.user
+        if data.member != null {
+            this.member = MemberModule.Member(data.member)
+        }
+        if data.user != null {
+            this.user = UserModule.User(data.user)
+        }
         this.message = data.message
         this.client = client
     }
@@ -163,9 +169,11 @@ export class Interaction {
         return false
     }
 
-    fn getUserOption(name: string): object | null {
+    fn getUserOption(name: string): UserModule.User | null {
         const option = this.getOption(name)
-        if option { return option.user }
+        if option and option.user != null {
+            return UserModule.User(option.user)
+        }
         return null
     }
 
@@ -227,13 +235,13 @@ export class Interaction {
 
     fn replyFile(file: FilePayload, content?: string): any {
         const payload = { "files": [file] }
-        if content != null and content != "" {payload.content = content }
+        if content != null and content != "" { payload.content = content }
         return this.replyPayload(payload)
     }
 
     fn replyFiles(files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.replyPayload(body)
     }
@@ -305,7 +313,7 @@ export class Interaction {
 
     fn editReplyFiles(files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.editReplyPayload(body)
     }
@@ -342,13 +350,13 @@ export class Interaction {
 
     fn followUpFile(file: FilePayload, content?: string): any {
         const payload = { "files": [file] }
-        if content != null and content != "" {payload.content = content }
+        if content != null and content != "" { payload.content = content }
         return this.followUpPayload(payload)
     }
 
     fn followUpFiles(files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.followUpPayload(body)
     }
@@ -391,7 +399,7 @@ export class Interaction {
 
     fn editFollowUpFiles(messageId: string, files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.editFollowUpPayload(messageId, body)
     }
@@ -413,7 +421,7 @@ export class Interaction {
 
     fn updateFiles(files: array, payload?: object): any {
         let body = {}
-        if payload != null {body = payload }
+        if payload != null { body = payload }
         body.files = files
         return this.updatePayload(body)
     }
@@ -491,14 +499,14 @@ export class EmbedBuilder {
 
     fn setFooter(text: string, iconUrl?: string): EmbedBuilder {
         this.data.footer = { "text": text }
-        if iconUrl != null and iconUrl != "" {this.data.footer.icon_url = iconUrl }
+        if iconUrl != null and iconUrl != "" { this.data.footer.icon_url = iconUrl }
         return this
     }
 
     fn setAuthor(name: string, iconUrl?: string, url?: string): EmbedBuilder {
         this.data.author = { "name": name }
-        if iconUrl != null and iconUrl != "" {this.data.author.icon_url = iconUrl }
-        if url != null and url != "" {this.data.author.url = url }
+        if iconUrl and iconUrl.length() { this.data.author.icon_url = iconUrl }
+        if url and url.length() { this.data.author.url = url }
         return this
     }
 
@@ -513,7 +521,7 @@ export class EmbedBuilder {
     }
 
     fn addField(name: string, value: string, inline?: bool): EmbedBuilder {
-        if !this.data.fields {this.data.fields = [] }
+        if !this.data.fields { this.data.fields = [] }
         this.data.fields.push({
             "name": name,
             "value": value,
@@ -523,8 +531,8 @@ export class EmbedBuilder {
     }
 
     fn addFields(fields: array): EmbedBuilder {
-        if !this.data.fields {this.data.fields = [] }
-        for item in fields {this.data.fields.push(item) }
+        if !this.data.fields { this.data.fields = [] }
+        for item in fields { this.data.fields.push(item) }
         return this
     }
 
