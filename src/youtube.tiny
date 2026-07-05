@@ -26,7 +26,8 @@ export fn getYoutubeVideos(videoUrl: string): array:YoutubeVideo {
     const cmd = `yt-dlp --cookies ./src/cookies.txt -f bestvideo[ext=mp4]+bestaudio[ext=m4a]/best --merge-output-format mp4 -o ${outputPath} ${videoUrl}`
 
     const result = process.shell(cmd, {
-        stdout: true
+        stdout: true,
+        stderr: true
     })
 
     if !result.success {
