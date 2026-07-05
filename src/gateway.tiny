@@ -97,6 +97,7 @@ export const Intents = Constants.Intent
 export const ComponentType = Constants.ComponentType
 export const ButtonStyle = Constants.ButtonStyle
 export const MessageFlag = Constants.MessageFlag
+export const PresenceStatuses = Constants.PresnceStatuses
 
 export fn newEmbed() { return CommandsModule.newEmbed() }
 export fn embedPayload(card: CommandsModule.EmbedBuilder | object): object {
@@ -577,7 +578,7 @@ export class Client {
         return this.sendFiles(dm.id, files, payload)
     }
 
-    fn setPresence(status: string, activityName: string) {
+    fn setPresence(status: Constants.PresnceStatuses, activityName: string) {
         const payload = {
             "op": Constants.GatewayOpcode.PresenceUpdate,
             "d": {

@@ -149,3 +149,10 @@ export enum GatewayEvents {
     MessageDelete = "MESSAGE_DELETE",
     InteractionCreate = "INTERACTION_CREATE"
 }
+
+export enum PresnceStatuses {
+    DND = "dnd",
+    Online = "online",
+    Idle = "idle",
+    Invisible = "invisible"
+}

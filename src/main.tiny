@@ -61,7 +61,7 @@ for file in fs.readDir(path) {
 await commandsTasks
 
 bot.onReady(fn(user) {
-    bot.setPresence("online", "make america gay again")
+    bot.setPresence(Discord.PresenceStatuses.Idle, "make america gay again")
     io.println(`Logged in as ${user.tag()}`)
 
     if previousUpdateMessage {
