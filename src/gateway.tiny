@@ -7,6 +7,7 @@ import "message.tiny" as MessageModule
 import "commands.tiny" as CommandsModule
 import "user.tiny" as UserModule
 import "member.tiny" as MemberModule
+import std "math";
 
 export interface BotConfig {
     token: string,
@@ -187,6 +188,11 @@ export class Client {
     fn onMessageDelete(handler: function) { this.messageDeleteCallback = handler }
     fn onInteraction(handler: function(CommandsModule.Interaction, Client)) { this.interactionCallback = handler }
     fn onError(handler: function) { this.errorCallback = handler }
+
+    fn getLatency(): number {
+        io.println(`[Host Client] getLatency called, current latency: ${this.latency}ms`)
+        return this.latency
+    }
 
     fn log(info: string) {
         if this.logging { this.logger(info) }
@@ -630,7 +636,7 @@ export class Client {
     fn start() {
         while this.running {
             this.connectGateway()
-            time.sleep(1000)
+            time.sleep(5000)
         }
     }
 
@@ -676,25 +682,27 @@ export class Client {
         }
 
         const liveConn = this.conn
-        const botInstance = this
 
         spawn() fn() {
-            // Wait for a fraction of the heartbeat interval before sending the first heartbeat
-            time.sleep(interval * 0.5)
+            try {
+                while true {
+                    if !this.running { break }
 
-            while this.running and liveConn.isOpen() {
-                botInstance.heartbeatSentTime = time.nowMs()
-                try {
-                    liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": botInstance.sequence })
-                } catch err {
-                    io.println(err)
-                    break
+                    this.heartbeatSentTime = time.nowNs()
+                    try {
+                        liveConn.sendJson({ "op": Constants.GatewayOpcode.Heartbeat, "d": this.sequence })
+                    } catch err {
+                        io.println("[Heartbeat Send Error]", err)
+                        break
+                    }
+                    time.sleep(interval)
                 }
-                time.sleep(interval)
-            }
 
-            if !this.running {
-                liveConn?.close(1000)
+                if !this.running {
+                    liveConn?.close(1000)
+                }
+            } catch err {
+                io.println("[Heartbeat Thread Error]", err)
             }
         }
 
@@ -758,7 +766,7 @@ export class Client {
         }
 
         if payload.op == Constants.GatewayOpcode.HeartbeatAck {
-            this.latency = time.nowMs() - this.heartbeatSentTime
+            this.latency = math.round((time.nowNs() - this.heartbeatSentTime) / 1000000.0)
             return true
         }
 
@@ -772,6 +780,7 @@ export class Client {
         }
 
         if payload.op == Constants.GatewayOpcode.InvalidSession {
+            time.sleep(5000)
             return false
         }
 
@@ -782,7 +791,14 @@ export class Client {
             this.cacheReady(payload.d)
             if !this.calledReady and this.readyCallback {
                 const userData = UserModule.User(payload.d.user)
-                this.readyCallback(userData)
+                const fireReady: function = this.readyCallback
+                spawn() fn() {
+                    try {
+                        fireReady(userData)
+                    } catch err {
+                        io.println("[Gateway] ready callback error: " + err.message)
+                    }
+                }
                 this.calledReady = true
             }
         }
