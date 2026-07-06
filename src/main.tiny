@@ -10,6 +10,14 @@ import lib "confh/TinyDotEnv" as TinyDotEnv;
 import std "process";
 import lib "confh/TinyColors" as TinyColors
 
+if !fs.exists("./output") {
+    fs.mkDir("output")
+}
+
+if !fs.exists("./files") {
+    fs.mkDir("files")
+}
+
 interface PreviousMessageState {
     channelID: string
     messageID: string

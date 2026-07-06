@@ -3,6 +3,7 @@ import "../commands.tiny" as Commands;
 import "../twitter.tiny" as Twitter
 import std "math";
 import std "http";
+import std "time";
 
 export fn info() {
     const cmd = Discord.CommandBuilder()
@@ -41,14 +42,18 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
             if i.member.user.id != interaction.member.user.id {
                 return i.replyEphemeral("fuck off")
             }
-            i.reply(link.url)
+            i.defer()
+            const fileName = `./files/file${time.nowMs()}`
+            const downloaded = http.downloadFile(fileName, link.url)
+            const discordFile = Discord.fileFromPath(fileName, "twitter.mp4", "video/mp4")
+            i.followUpFile(discordFile)
             interaction.deleteReply()
         }))
     }
 
     const container: object = Discord.container([
-    Discord.textDisplay("## Download"),
-    Discord.actionRow(actionRow)
+        Discord.textDisplay("## Download"),
+        Discord.actionRow(actionRow)
     ])
 
     interaction.followUpComponents([container])
