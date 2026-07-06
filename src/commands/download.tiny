@@ -4,6 +4,7 @@ import "../twitter.tiny" as Twitter
 import std "math";
 import std "http";
 import std "time";
+import std "fs";
 
 export fn info() {
     const cmd = Discord.CommandBuilder()
@@ -43,7 +44,10 @@ export fn run(interaction: Discord.Interaction, client: Discord.Client) {
                 return i.replyEphemeral("fuck off")
             }
             i.defer()
-            const fileName = `./files/file${time.nowMs()}`
+            const fileName = `./files/file${time.nowMs()}.mp4`
+            defer fn() {
+                fs.remove(fileName)
+            }
             const downloaded = http.downloadFile(fileName, link.url)
             const discordFile = Discord.fileFromPath(fileName, "twitter.mp4", "video/mp4")
             i.followUpFile(discordFile)
